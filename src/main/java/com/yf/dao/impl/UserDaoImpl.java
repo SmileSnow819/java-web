@@ -1,135 +1,121 @@
 package com.yf.dao.impl;
 
-import com.yf.dao.impl.UserDao;
+import com.yf.dao.UserDao;
 import com.yf.pojo.User;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
+import com.yf.until.DBUntil;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
 
-public class UserDaoImpl implements UserDao {
+/**
+ * UserDao 接口实现类，继承 DBUtil (注意修正包名和类名)
+ */
+public class UserDaoImpl extends DBUntil implements UserDao {
 
+    // 1. 登录
     @Override
     public User login(String uName, String uPwd) {
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        User user = null;
         String sql = "SELECT u_id, u_name, u_pwd FROM user WHERE u_name = ? AND u_pwd = ?";
-
+        ResultSet rs = executeQuery(sql, uName, uPwd);
+        User user = null;
+        Statement stmt = null;
         try {
-            conn = DBUtil.getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setString(1, uName);
-            ps.setString(2, uPwd);
-            rs = ps.executeQuery();
-
-            if (rs.next()) {
-                // 查询成功，封装 User 对象
-                user = new User(
-                        rs.getInt("u_id"),
-                        rs.getString("u_name"),
-                        rs.getString("u_pwd")
-                );
+            if (rs != null && rs.next()) {
+                user = new User(rs.getInt("u_id"), rs.getString("u_name"), rs.getString("u_pwd"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
-            DBUtil.close(rs, ps, conn); // 关闭资源
+            try {
+                if (rs != null) {
+                    stmt = rs.getStatement();
+                }
+            } catch (SQLException e) {
+                // 忽略或打印异常
+            }
+            closeAll(rs, stmt, null);
         }
         return user;
     }
 
+    // 2. 注册
     @Override
-    public int addUser(User user) {
-        Connection conn = null;
-        PreparedStatement ps = null;
-        int rows = 0;
+    public boolean addUser(User user) {
         String sql = "INSERT INTO user (u_name, u_pwd) VALUES (?, ?)";
+        int rows = executeUpdate(sql, user.getuName(), user.getuPwd());
+        return rows > 0;
+    }
 
+    // 3. 展示所有用户
+    @Override
+    public List<User> getAllUser() {
+        String sql = "SELECT u_id, u_name, u_pwd FROM user";
+        ResultSet rs = executeQuery(sql);
+        List<User> userList = new ArrayList<>();
+        Statement stmt = null;
         try {
-            conn = DBUtil.getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setString(1, user.getuName());
-            ps.setString(2, user.getuPwd());
-            rows = ps.executeUpdate(); // 执行更新操作
+            while (rs != null && rs.next()) {
+                User user = new User(rs.getInt("u_id"), rs.getString("u_name"), rs.getString("u_pwd"));
+                userList.add(user);
+            }
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
-            DBUtil.close(ps, conn);
+            try {
+                if (rs != null) {
+                    stmt = rs.getStatement();
+                }
+            } catch (SQLException e) {
+                // 忽略或打印异常
+            }
+            closeAll(rs, stmt, null);
         }
-        return rows;
+        return userList;
     }
 
+    // 4. 注销用户 (delUser)
     @Override
-    public int delUser(int uId) {
-        Connection conn = null;
-        PreparedStatement ps = null;
-        int rows = 0;
+    public boolean delUser(int uId) {
         String sql = "DELETE FROM user WHERE u_id = ?";
-
-        try {
-            conn = DBUtil.getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setInt(1, uId);
-            rows = ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            DBUtil.close(ps, conn);
-        }
-        return rows;
+        // 调用继承自 DBUtil 的增删改方法
+        int rows = executeUpdate(sql, uId);
+        return rows > 0;
     }
 
-    @Override
-    public int updateUser(User user) {
-        Connection conn = null;
-        PreparedStatement ps = null;
-        int rows = 0;
-        String sql = "UPDATE user SET u_name = ?, u_pwd = ? WHERE u_id = ?";
-
-        try {
-            conn = DBUtil.getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setString(1, user.getuName());
-            ps.setString(2, user.getuPwd());
-            ps.setInt(3, user.getuId());
-            rows = ps.executeUpdate();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        } finally {
-            DBUtil.close(ps, conn);
-        }
-        return rows;
-    }
-
+    // 5. 根据 ID 查询用户 (辅助修改功能)
     @Override
     public User getUserById(int uId) {
-        Connection conn = null;
-        PreparedStatement ps = null;
-        ResultSet rs = null;
-        User user = null;
         String sql = "SELECT u_id, u_name, u_pwd FROM user WHERE u_id = ?";
-
+        ResultSet rs = executeQuery(sql, uId);
+        User user = null;
+        Statement stmt = null;
         try {
-            conn = DBUtil.getConnection();
-            ps = conn.prepareStatement(sql);
-            ps.setInt(1, uId);
-            rs = ps.executeQuery();
-
-            if (rs.next()) {
-                user = new User(
-                        rs.getInt("u_id"),
-                        rs.getString("u_name"),
-                        rs.getString("u_pwd")
-                );
+            if (rs != null && rs.next()) {
+                user = new User(rs.getInt("u_id"), rs.getString("u_name"), rs.getString("u_pwd"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
-            DBUtil.close(rs, ps, conn);
+            try {
+                if (rs != null) {
+                    stmt = rs.getStatement();
+                }
+            } catch (SQLException e) {
+                // 忽略或打印异常
+            }
+            closeAll(rs, stmt, null);
         }
         return user;
+    }
+
+    // 6. 编辑用户 (updateUser)
+    @Override
+    public boolean updateUser(int uId, String newName, String newPwd) {
+        String sql = "UPDATE user SET u_name = ?, u_pwd = ? WHERE u_id = ?";
+        // 调用继承自 DBUtil 的增删改方法
+        int rows = executeUpdate(sql, newName, newPwd, uId);
+        return rows > 0;
     }
 }
