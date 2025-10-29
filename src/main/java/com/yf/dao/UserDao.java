@@ -1,22 +1,24 @@
 package com.yf.dao;
+import com.yf.model.User;
 
-import com.yf.pojo.User;
-import java.util.List;
+
 
 /**
- * 用户数据访问对象接口 (DAO)
+ * Data access object interface for User operations.
  */
 public interface UserDao {
-
-    User login(String uName, String uPwd);
-
+    /**
+     * Adds a new user to the database (Registration).
+     * @param user The user object to add.
+     * @return true if successful, false otherwise.
+     */
     boolean addUser(User user);
 
-    List<User> getAllUser();
-
-    boolean delUser(int uId);
-
-    User getUserById(int uId); // 辅助方法：按ID查询用户
-
-    boolean updateUser(int uId, String newName, String newPwd);
+    /**
+     * Checks user credentials for login.
+     * @param uName Username.
+     * @param uPwd Password.
+     * @return A User object if login is successful, null otherwise.
+     */
+    User login(String uName, String uPwd);
 }

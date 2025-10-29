@@ -1,104 +1,90 @@
 package com.yf.until;
 
-import java.sql.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 /**
- * 封装 JDBC 链接数据库的增删改方法和查询方法，作为 DAO 实现类的父类。
- * 结构参考提供的 BaseDao.png
+ * Utility class to encapsulate JDBC connection and resource management.
  */
 public class BaseDao {
-    private static final Logger LOGGER = Logger.getLogger(BaseDao.class.getName());
-
-    // JDBC 驱动名和数据库 URL
+    // Database connection constants (Replace with your actual credentials)
     private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
-    private static final String URL = "jdbc:mysql://localhost:3306/dbms_user?useSSL=false&serverTimezone=UTC";
+    private static final String URL = "jdbc:mysql://localhost:3306/dbms_demo?serverTimezone=UTC";
+    private static final String USER = "root"; // Use your MySQL user
+    private static final String PASSWORD = "123456"; // 使用您设置的密码
 
-    // 数据库的用户名与密码
-    private static final String USER = "root"; // 替换为您的数据库用户名
-    private static final String PWD = "123456"; // 替换为您的数据库密码
-
-    // 静态代码块加载驱动
+    // Static block to load the JDBC driver
     static {
         try {
             Class.forName(DRIVER);
         } catch (ClassNotFoundException e) {
-            LOGGER.log(Level.SEVERE, "无法加载 MySQL 驱动", e);
-            throw new RuntimeException("数据库驱动加载失败", e);
+            System.err.println("Error loading MySQL driver: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    // 声明一个方法:用来获取数据库连接
-    public Connection getConn() throws SQLException {
-        // 使用 DriverManager.getConnection() 方法获取连接
-        return DriverManager.getConnection(URL, USER, PWD);
+    /**
+     * Get a database connection.
+     * @return Connection object, or null if connection fails.
+     */
+    protected Connection getConnection() {
+        Connection conn = null;
+        try {
+            conn = DriverManager.getConnection(URL, USER, PASSWORD);
+        } catch (SQLException e) {
+            System.err.println("Error getting connection: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return conn;
     }
 
-    // 声明一个方法:用来关闭所有资源
-    public void closeAll(ResultSet rs, PreparedStatement ps, Connection conn) {
+    /**
+     * Close all JDBC resources.
+     * @param conn Connection
+     * @param ps PreparedStatement
+     * @param rs ResultSet
+     */
+    protected void closeAll(Connection conn, PreparedStatement ps, ResultSet rs) {
         try {
             if (rs != null) rs.close();
             if (ps != null) ps.close();
             if (conn != null) conn.close();
         } catch (SQLException e) {
-            LOGGER.log(Level.WARNING, "关闭数据库资源失败", e);
-            // 抛出运行时异常，确保调用者知道出现了错误
-            throw new RuntimeException("关闭数据库资源失败", e);
+            System.err.println("Error closing resources: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     /**
-     * 封装增删改方法 (INSERT, UPDATE, DELETE)
-     * @param sql SQL 语句
-     * @param objs SQL 参数数组
-     * @return 影响的行数
+     * Executes an INSERT, UPDATE, or DELETE statement.
+     * @param sql The SQL query.
+     * @param params Parameters to set in the PreparedStatement.
+     * @return The number of rows affected.
      */
-    public int executeUpdate(String sql, Object[] objs) {
-        int num = 0;
+    protected int executeUpdate(String sql, Object... params) {
         Connection conn = null;
         PreparedStatement ps = null;
+        int rows = 0;
+
         try {
-            conn = getConn();
+            conn = getConnection();
             ps = conn.prepareStatement(sql);
 
-            // 设置参数
-            if (objs != null) {
-                for (int i = 0; i < objs.length; i++) {
-                    ps.setObject(i + 1, objs[i]);
-                }
+            // Set parameters
+            for (int i = 0; i < params.length; i++) {
+                ps.setObject(i + 1, params[i]);
             }
-            num = ps.executeUpdate();
 
+            rows = ps.executeUpdate();
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "执行更新操作失败: " + sql, e);
-            // 抛出运行时异常，便于上层捕获处理
-            throw new RuntimeException("数据库更新操作失败", e);
+            System.err.println("Error executing update: " + e.getMessage());
+            e.printStackTrace();
         } finally {
-            closeAll(null, ps, conn);
+            closeAll(conn, ps, null);
         }
-        return num;
-    }
-
-    /**
-     * 封装查询方法 (SELECT)，返回结果集
-     * @param sql SQL 语句
-     * @param objs SQL 参数数组
-     * @return ResultSet 结果集
-     */
-    public ResultSet executeQuery(String sql, Object[] objs) throws SQLException {
-        // 注意：这里的 conn 和 ps 必须保持打开状态直到 DAOImpl 处理完 ResultSet
-        Connection conn = getConn();
-        PreparedStatement ps = conn.prepareStatement(sql);
-
-        // 设置参数
-        if (objs != null) {
-            for (int i = 0; i < objs.length; i++) {
-                ps.setObject(i + 1, objs[i]);
-            }
-        }
-
-        // 这里的资源关闭需要在调用方 (UserDaoImpl) 手动处理
-        return ps.executeQuery();
+        return rows;
     }
 }

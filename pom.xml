@@ -1,46 +1,50 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    <groupId>my-app</groupId>
-    <artifactId>test</artifactId>
-    <packaging>war</packaging>
+    <groupId>com.app</groupId>
+    <artifactId>student-management-system</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <name>test Maven Webapp</name>
-    <url>http://maven.apache.org</url>
+    <packaging>war</packaging>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <mysql.version>8.0.30</mysql.version> <junit.jupiter.version>5.9.1</junit.jupiter.version>
     </properties>
 
     <dependencies>
+        <!-- 1. Servlet API 依赖 (解决 '无法解析符号 javax.servlet' 的问题) -->
+        <!-- 注意：如果您的Tomcat版本 >= 10.0，请改用 jakarta.servlet-api -->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>javax.servlet-api</artifactId>
+            <version>4.0.1</version>
+            <!-- 运行时由容器（如Tomcat）提供，打包时不需要包含 -->
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- 2. MySQL JDBC 驱动依赖 (用于数据库连接) -->
         <dependency>
             <groupId>mysql</groupId>
             <artifactId>mysql-connector-java</artifactId>
-            <version>${mysql.version}</version>
+            <version>8.0.33</version>
         </dependency>
 
+        <!-- JSTL/JSP 依赖 (虽然不是编译必需，但 Web 项目通常需要) -->
         <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.jupiter.version}</version>
-            <scope>test</scope>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
+            <version>1.2</version>
         </dependency>
-
     </dependencies>
 
+    <!-- 确保您的项目可以正确打包成WAR文件 -->
     <build>
-        <finalName>test</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
-                <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
-                </configuration>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.2</version>
             </plugin>
         </plugins>
     </build>
