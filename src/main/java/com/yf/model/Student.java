@@ -5,10 +5,8 @@ public class Student {
     private String stuName;
     private int stuAge;
 
-    // Default constructor
     public Student() {}
 
-    // Getters and Setters
     public int getStuNo() {
         return stuNo;
     }
@@ -32,14 +30,4 @@ public class Student {
     public void setStuAge(int stuAge) {
         this.stuAge = stuAge;
     }
-
-    @Override
-    public String toString() {
-        return "Student{" +
-                "stuNo=" + stuNo +
-                ", stuName='" + stuName + '\'' +
-                ", stuAge=" + stuAge +
-                '}';
-    }
 }
-

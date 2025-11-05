@@ -1,53 +1,33 @@
 package com.yf.model;
 
-/**
- * User entity model, corresponds to the 'user' table.
- */
 public class User {
-    private int uId;
-    private String uName;
-    private String uPwd;
+    private int u_id;
+    private String u_name;
+    private String u_pwd;
 
-    // Default constructor
     public User() {}
 
-    // Constructor for registration/login
-    public User(String uName, String uPwd) {
-        this.uName = uName;
-        this.uPwd = uPwd;
+    public int getU_id() {
+        return u_id;
     }
 
-    // Getters and Setters
-    public int getUId() {
-        return uId;
+    public void setU_id(int u_id) {
+        this.u_id = u_id;
     }
 
-    public void setUId(int uId) {
-        this.uId = uId;
+    public String getU_name() {
+        return u_name;
     }
 
-    public String getUName() {
-        return uName;
+    public void setU_name(String u_name) {
+        this.u_name = u_name;
     }
 
-    public void setUName(String uName) {
-        this.uName = uName;
+    public String getU_pwd() {
+        return u_pwd;
     }
 
-    public String getUPwd() {
-        return uPwd;
-    }
-
-    public void setUPwd(String uPwd) {
-        this.uPwd = uPwd;
-    }
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "uId=" + uId +
-                ", uName='" + uName + '\'' +
-                '}';
+    public void setU_pwd(String u_pwd) {
+        this.u_pwd = u_pwd;
     }
 }
-

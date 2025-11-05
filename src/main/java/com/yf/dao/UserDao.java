@@ -1,24 +1,20 @@
 package com.yf.dao;
+
 import com.yf.model.User;
 
-
-
-/**
- * Data access object interface for User operations.
- */
 public interface UserDao {
     /**
-     * Adds a new user to the database (Registration).
-     * @param user The user object to add.
-     * @return true if successful, false otherwise.
+     * 注册功能：添加新用户
+     * @param user 用户对象
+     * @return 影响行数
      */
-    boolean addUser(User user);
+    int addUser(User user);
 
     /**
-     * Checks user credentials for login.
-     * @param uName Username.
-     * @param uPwd Password.
-     * @return A User object if login is successful, null otherwise.
+     * 登录功能：根据用户名和密码查询用户
+     * @param u_name 用户名
+     * @param u_pwd 密码
+     * @return 找到的用户对象，如果未找到则返回 null
      */
-    User login(String uName, String uPwd);
+    User getUserByCredentials(String u_name, String u_pwd);
 }

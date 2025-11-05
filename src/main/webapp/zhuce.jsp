@@ -5,20 +5,20 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>用户登录</title>
+    <title>用户注册</title>
 </head>
 <body>
-<h1>用户登录</h1>
+<h1>用户注册</h1>
 
 <p style="color: red;">${msg}</p>
 
 <form action="UserServlet" method="post">
-    <input type="hidden" name="action" value="login">
+    <input type="hidden" name="action" value="register">
     <p>用户名: <input type="text" name="user" required></p>
-    <p>密 码: <input type="password" name="pwd" required></p>
+    <p>密 码: <input type="password" name="pwd" required minlength="6"></p>
     <p>
-        <button type="submit">登录</button>
-        <a href="zhuce.jsp">去注册</a>
+        <button type="submit">注册</button>
+        <a href="login.jsp">返回登录</a>
     </p>
 </form>
 </body>
