@@ -62,7 +62,7 @@ public class UserServlet extends HttpServlet {
         } else {
 
             req.setAttribute("msg", "注册失败，用户名可能已存在或信息不符合要求。");
-            req.getRequestDispatcher("zhuce.jsp").forward(req, resp);
+            req.getRequestDispatcher("register.jsp").forward(req, resp);
             // 此时浏览器URL保持不变，仍是 http://localhost:8080/test/UserServlet
         }
     }
