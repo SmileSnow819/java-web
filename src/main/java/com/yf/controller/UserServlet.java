@@ -30,6 +30,8 @@ public class UserServlet extends HttpServlet {
             login(req, resp);
         } else if ("register".equals(action)) {
             register(req, resp);
+        } else if ("logout".equals(action)) {
+            logout(req, resp);
         } else {
             // 默认跳转到登录页面 (当 action 为空或不匹配时)
             // 确保使用绝对路径重定向，避免相对路径错误
@@ -65,6 +67,16 @@ public class UserServlet extends HttpServlet {
             req.getRequestDispatcher("register.jsp").forward(req, resp);
             // 此时浏览器URL保持不变，仍是 http://localhost:8080/test/UserServlet
         }
+    }
+
+    // --- 退出登录功能 ---
+    private void logout(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        // 清除session中的用户信息
+        req.getSession().removeAttribute("currentUser");
+        // 可选：使session失效
+        req.getSession().invalidate();
+        // 重定向到登录页面
+        resp.sendRedirect(req.getContextPath() + "/login.jsp");
     }
 
     // --- 登录功能 ---

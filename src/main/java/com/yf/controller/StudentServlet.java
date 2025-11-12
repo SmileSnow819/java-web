@@ -25,6 +25,15 @@ public class StudentServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         req.setCharacterEncoding("utf-8");
+        
+        // 检查用户是否登录
+        Object currentUser = req.getSession().getAttribute("currentUser");
+        if (currentUser == null) {
+            // 未登录，重定向到登录页面
+            resp.sendRedirect(req.getContextPath() + "/login.jsp");
+            return;
+        }
+        
         // 使用 action 参数进行多功能分发
         String action = req.getParameter("action");
 
