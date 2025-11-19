@@ -124,4 +124,52 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
         }
         return list;
     }
+    
+    @Override
+    public int getStuCount() {
+        String sql = "SELECT COUNT(*) FROM student";
+        Connection conn = DBUtil.getConnection();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        int count = 0;
+        try {
+            ps = conn.prepareStatement(sql);
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeResources(rs, ps, conn);
+        }
+        return count;
+    }
+    
+    @Override
+    public List<Student> getStuPage(int index, int pageSize) {
+        String sql = "SELECT stuNo, stuName, stuAge FROM student LIMIT ?, ?";
+        Connection conn = DBUtil.getConnection();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        List<Student> list = new ArrayList<>();
+        try {
+            ps = conn.prepareStatement(sql);
+            ps.setInt(1, index);
+            ps.setInt(2, pageSize);
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                Student stu = new Student();
+                stu.setStuNo(rs.getInt("stuNo"));
+                stu.setStuName(rs.getString("stuName"));
+                stu.setStuAge(rs.getInt("stuAge"));
+                list.add(stu);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeResources(rs, ps, conn);
+        }
+        return list;
+    }
 }

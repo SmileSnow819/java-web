@@ -57,6 +57,9 @@ public class StudentServlet extends HttpServlet {
             case "addStu":
                 addStu(req, resp); // 录入学生信息
                 break;
+            case "getStuPage":
+                getStuPage(req, resp); // 分页显示学生信息
+                break;
             default:
                 getAllStu(req, resp);
         }
@@ -152,5 +155,31 @@ public class StudentServlet extends HttpServlet {
 
         // 转: 修改成功后回到查询全部学生的界面
         resp.sendRedirect("StudentServlet?action=getAll");
+    }
+    
+    // --- 6. 分页显示学生信息 ---
+    private void getStuPage(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // 创建分页对象
+        com.yf.util.PageBean page = new com.yf.util.PageBean();
+        
+        // 取: 获取客户端请求的信息
+        String pageNowStr = req.getParameter("pageNow");
+        int pageNow = 1;
+        if (pageNowStr != null && !pageNowStr.trim().isEmpty()) {
+            try {
+                pageNow = Integer.parseInt(pageNowStr);
+            } catch (NumberFormatException e) {
+                pageNow = 1;
+            }
+        }
+        
+        // 调: 调用分页业务
+        page = studentService.getStuPage(pageNow);
+        
+        // 把分页信息保存到request的作用域当中
+        req.setAttribute("page", page);
+        
+        // 跳转至分页页面 (请求转发)
+        req.getRequestDispatcher("getStuPage.jsp").forward(req, resp);
     }
 }

@@ -53,6 +53,14 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
       <a href="addStu.jsp">
         <button>+ 录入学生信息</button>
       </a>
+
+      <%-- 分页视图切换按钮 --%>
+      <a
+        href="StudentServlet?action=getStuPage&pageNow=1"
+        style="margin-left: 10px"
+      >
+        <button>📄 分页视图</button>
+      </a>
     </p>
 
     <hr />

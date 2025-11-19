@@ -4,6 +4,7 @@ import com.yf.dao.StudentDao;
 import com.yf.dao.impl.StudentDaoImpl;
 import com.yf.model.Student;
 import com.yf.service.StudentService;
+import com.yf.util.PageBean;
 import java.util.List;
 
 public class StudentServiceImpl implements StudentService {
@@ -50,5 +51,24 @@ public class StudentServiceImpl implements StudentService {
     public List<Student> getAllStu() {
         // [业务逻辑]：可以在这里添加数据预处理或缓存逻辑
         return studentDao.getAllStu();
+    }
+
+    @Override
+    public PageBean getStuPage(int pageNow) {
+        // 创建分页对象
+        PageBean page = new PageBean();
+        
+        // 设置当前页
+        page.setPageNow(pageNow);
+        
+        // 调用功能接口中获取总数量的方法
+        int count = studentDao.getStuCount();
+        page.setPageCount(count);
+        
+        // 调用分页数据的方法
+        List<Student> stus = studentDao.getStuPage(page.getStartIndex(), page.getPageSize());
+        page.getList().addAll(stus);
+        
+        return page;
     }
 }
