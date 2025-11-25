@@ -1,128 +1,196 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-pageEncoding="UTF-8"%> <%-- 引入 JSTL 核心标签库，用于循环遍历和条件判断 --%>
-<%@ page isELIgnored="false" %> <%@ taglib
-uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+pageEncoding="UTF-8"%>
+<%@ page isELIgnored="false" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>学生信息管理</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-      }
-      table {
-        width: 80%;
-        border-collapse: collapse;
-        margin: 20px auto;
-      }
-      th,
-      td {
-        border: 1px solid #ccc;
-        padding: 10px;
-        text-align: center;
-      }
-      th {
-        background-color: #f2f2f2;
-      }
-      .action-link {
-        margin: 0 5px;
-        text-decoration: none;
-        color: blue;
-      }
-      .action-link:hover {
-        text-decoration: underline;
-      }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
   </head>
-  <body>
-    <h1>学生信息列表</h1>
+  <body class="bg-gray-50 min-h-screen">
+    <!-- 顶部导航栏 -->
+    <nav class="bg-white shadow-md">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <h1 class="text-2xl font-bold text-gray-800">学生信息列表</h1>
+          <c:if test="${not empty sessionScope.currentUser}">
+            <div class="flex items-center space-x-4">
+              <span class="text-gray-700">欢迎，<span class="font-semibold text-blue-600">${sessionScope.currentUser.u_name}</span>！</span>
+              <a href="UserServlet?action=logout" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+                退出登录
+              </a>
+            </div>
+          </c:if>
+        </div>
+      </div>
+    </nav>
 
-    <%-- 显示当前登录用户信息和退出按钮 --%>
-    <div style="text-align: right; margin-bottom: 20px">
-      <c:if test="${not empty sessionScope.currentUser}">
-        欢迎，${sessionScope.currentUser.u_name}！
-        <a href="UserServlet?action=logout" style="margin-left: 10px">
-          <button>退出登录</button>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- 操作按钮区域 -->
+      <div class="mb-6 flex flex-wrap gap-4">
+        <a href="addStu.jsp" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          录入学生信息
         </a>
-      </c:if>
+        <a href="StudentServlet?action=getStuPage&pageNow=1" class="inline-flex items-center px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+          分页视图
+        </a>
+      </div>
+
+      <!-- 搜索条件表单 -->
+      <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <form action="StudentServlet" method="get" class="flex flex-wrap gap-4 items-end">
+          <input type="hidden" name="action" value="getAll" />
+          
+          <div class="flex-1 min-w-[200px]">
+            <label for="searchStuNo" class="block text-sm font-medium text-gray-700 mb-2">学号</label>
+            <input
+              type="text"
+              id="searchStuNo"
+              name="stuNo"
+              value="${searchStuNo}"
+              placeholder="请输入学号"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            />
+          </div>
+          
+          <div class="flex-1 min-w-[200px]">
+            <label for="searchStuName" class="block text-sm font-medium text-gray-700 mb-2">姓名</label>
+            <input
+              type="text"
+              id="searchStuName"
+              name="stuName"
+              value="${searchStuName}"
+              placeholder="请输入姓名"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            />
+          </div>
+          
+          <div class="flex-1 min-w-[200px]">
+            <label for="searchStuAge" class="block text-sm font-medium text-gray-700 mb-2">年龄</label>
+            <input
+              type="text"
+              id="searchStuAge"
+              name="stuAge"
+              value="${searchStuAge}"
+              placeholder="请输入年龄"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            />
+          </div>
+          
+          <div class="flex gap-2">
+            <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md">
+              <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+              搜索
+            </button>
+            <a href="StudentServlet?action=getAll" class="px-6 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors shadow-md">
+              重置
+            </a>
+          </div>
+        </form>
+      </div>
+
+      <c:choose>
+        <c:when test="${empty studentList}">
+          <div class="bg-white rounded-lg shadow-md p-12 text-center">
+            <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+            </svg>
+            <p class="text-gray-500 text-lg">目前没有学生信息记录</p>
+          </div>
+        </c:when>
+        <c:otherwise>
+          <!-- 数据表格 -->
+          <div class="bg-white rounded-lg shadow-md overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gradient-to-r from-green-500 to-emerald-600">
+                  <tr>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">学号</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">姓名</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">年龄</th>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">操作</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <c:forEach var="stu" items="${studentList}">
+                    <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${stu.stuNo}</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${stu.stuName}</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${stu.stuAge}</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        <button
+                          onclick="goToUpdate(${stu.stuNo})"
+                          class="mr-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-xs"
+                        >
+                          编辑
+                        </button>
+                        <button
+                          onclick="confirmDelete(${stu.stuNo})"
+                          class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-xs"
+                        >
+                          开除
+                        </button>
+                      </td>
+                    </tr>
+                  </c:forEach>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </c:otherwise>
+      </c:choose>
     </div>
 
-    <%-- 录入按钮：跳转到录入页面 --%>
-    <p>
-      <a href="addStu.jsp">
-        <button>+ 录入学生信息</button>
-      </a>
-
-      <%-- 分页视图切换按钮 --%>
-      <a
-        href="StudentServlet?action=getStuPage&pageNow=1"
-        style="margin-left: 10px"
-      >
-        <button>📄 分页视图</button>
-      </a>
-    </p>
-
-    <hr />
-
-    <c:choose>
-      <%-- 判断 studentList 是否为空 --%>
-      <c:when test="${empty studentList}">
-        <p>目前没有学生信息记录。</p>
-      </c:when>
-      <c:otherwise>
-        <table>
-          <thead>
-            <tr>
-              <th>学号</th>
-              <th>姓名</th>
-              <th>年龄</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <%-- 遍历 StudentServlet 存入 request 域的 studentList --%>
-            <c:forEach var="stu" items="${studentList}">
-              <tr>
-                <td><c:out value="${stu.stuNo}" /></td>
-                <td><c:out value="${stu.stuName}" /></td>
-                <td><c:out value="${stu.stuAge}" /></td>
-                <td>
-                  <%-- 编辑功能：根据ID查询，转发到 updateStu.jsp --%>
-                  <a
-                    href="StudentServlet?action=toUpdate&stuNo=${stu.stuNo}"
-                    class="action-link"
-                    >编辑</a
-                  >
-
-                  <%-- 开除功能：调用 JavaScript 确认函数 --%>
-                  <a
-                    href="javascript:void(0);"
-                    onclick="confirmDelete(${stu.stuNo})"
-                    class="action-link"
-                    >开除</a
-                  >
-                </td>
-              </tr>
-            </c:forEach>
-          </tbody>
-        </table>
-      </c:otherwise>
-    </c:choose>
-
     <script>
-      /**
-       * 弹出确认框，确认后向 StudentServlet 发送删除请求
-       * @param {number} stuNo 要删除的学生编号
-       */
+      function goToUpdate(stuNo) {
+        var url = 'StudentServlet?action=toUpdate&stuNo=' + stuNo;
+        var searchStuNo = document.getElementById('searchStuNo') ? document.getElementById('searchStuNo').value : '';
+        var searchStuName = document.getElementById('searchStuName') ? document.getElementById('searchStuName').value : '';
+        var searchStuAge = document.getElementById('searchStuAge') ? document.getElementById('searchStuAge').value : '';
+        
+        if (searchStuNo && searchStuNo.trim() !== '') {
+          url += '&searchStuNo=' + encodeURIComponent(searchStuNo);
+        }
+        if (searchStuName && searchStuName.trim() !== '') {
+          url += '&searchStuName=' + encodeURIComponent(searchStuName);
+        }
+        if (searchStuAge && searchStuAge.trim() !== '') {
+          url += '&searchStuAge=' + encodeURIComponent(searchStuAge);
+        }
+        
+        window.location.href = url;
+      }
+
       function confirmDelete(stuNo) {
-        // 弹出一个删除提示框
         if (confirm('是否确认开除学生学号 ' + stuNo + ' ？此操作不可逆！')) {
-          // 点击确认，发送请求到服务器删除学生
-          // URL: StudentServlet?action=delStu&stuNo=XXX
-          window.location.href = 'StudentServlet?action=delStu&stuNo=' + stuNo;
+          var url = 'StudentServlet?action=delStu&returnView=getAll&stuNo=' + stuNo;
+          var searchStuNo = document.getElementById('searchStuNo') ? document.getElementById('searchStuNo').value : '';
+          var searchStuName = document.getElementById('searchStuName') ? document.getElementById('searchStuName').value : '';
+          var searchStuAge = document.getElementById('searchStuAge') ? document.getElementById('searchStuAge').value : '';
+          
+          if (searchStuNo && searchStuNo.trim() !== '') {
+            url += '&queryStuNo=' + encodeURIComponent(searchStuNo);
+          }
+          if (searchStuName && searchStuName.trim() !== '') {
+            url += '&queryStuName=' + encodeURIComponent(searchStuName);
+          }
+          if (searchStuAge && searchStuAge.trim() !== '') {
+            url += '&queryStuAge=' + encodeURIComponent(searchStuAge);
+          }
+          
+          window.location.href = url;
         } else {
-          // 点击取消，取消操作
           alert('开除操作已取消。');
         }
       }

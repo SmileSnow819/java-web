@@ -71,4 +71,28 @@ public class StudentServiceImpl implements StudentService {
         
         return page;
     }
+    
+    @Override
+    public List<Student> getAllStu(Integer stuNo, String stuName, Integer stuAge) {
+        return studentDao.getAllStu(stuNo, stuName, stuAge);
+    }
+    
+    @Override
+    public PageBean getStuPage(int pageNow, Integer stuNo, String stuName, Integer stuAge) {
+        // 创建分页对象
+        PageBean page = new PageBean();
+        
+        // 设置当前页
+        page.setPageNow(pageNow);
+        
+        // 调用功能接口中获取符合条件的总数量
+        int count = studentDao.getStuCount(stuNo, stuName, stuAge);
+        page.setPageCount(count);
+        
+        // 调用分页数据的方法
+        List<Student> stus = studentDao.getStuPage(page.getStartIndex(), page.getPageSize(), stuNo, stuName, stuAge);
+        page.getList().addAll(stus);
+        
+        return page;
+    }
 }

@@ -13,4 +13,8 @@ public interface StudentService {
     
     // 分页业务
     PageBean getStuPage(int pageNow);
+    
+    // 带搜索条件的方法
+    List<Student> getAllStu(Integer stuNo, String stuName, Integer stuAge);
+    PageBean getStuPage(int pageNow, Integer stuNo, String stuName, Integer stuAge);
 }

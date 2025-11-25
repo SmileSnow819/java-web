@@ -172,4 +172,144 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
         }
         return list;
     }
+    
+    @Override
+    public int getStuCount(Integer stuNo, String stuName, Integer stuAge) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM student WHERE 1=1");
+        Connection conn = DBUtil.getConnection();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        int count = 0;
+        try {
+            // 动态构建SQL条件
+            if (stuNo != null) {
+                sql.append(" AND stuNo = ?");
+            }
+            if (stuName != null && !stuName.trim().isEmpty()) {
+                sql.append(" AND stuName LIKE ?");
+            }
+            if (stuAge != null) {
+                sql.append(" AND stuAge = ?");
+            }
+            
+            ps = conn.prepareStatement(sql.toString());
+            int paramIndex = 1;
+            if (stuNo != null) {
+                ps.setInt(paramIndex++, stuNo);
+            }
+            if (stuName != null && !stuName.trim().isEmpty()) {
+                ps.setString(paramIndex++, "%" + stuName + "%");
+            }
+            if (stuAge != null) {
+                ps.setInt(paramIndex++, stuAge);
+            }
+            
+            rs = ps.executeQuery();
+            if (rs.next()) {
+                count = rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeResources(rs, ps, conn);
+        }
+        return count;
+    }
+    
+    @Override
+    public List<Student> getStuPage(int index, int pageSize, Integer stuNo, String stuName, Integer stuAge) {
+        StringBuilder sql = new StringBuilder("SELECT stuNo, stuName, stuAge FROM student WHERE 1=1");
+        Connection conn = DBUtil.getConnection();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        List<Student> list = new ArrayList<>();
+        try {
+            // 动态构建SQL条件
+            if (stuNo != null) {
+                sql.append(" AND stuNo = ?");
+            }
+            if (stuName != null && !stuName.trim().isEmpty()) {
+                sql.append(" AND stuName LIKE ?");
+            }
+            if (stuAge != null) {
+                sql.append(" AND stuAge = ?");
+            }
+            sql.append(" LIMIT ?, ?");
+            
+            ps = conn.prepareStatement(sql.toString());
+            int paramIndex = 1;
+            if (stuNo != null) {
+                ps.setInt(paramIndex++, stuNo);
+            }
+            if (stuName != null && !stuName.trim().isEmpty()) {
+                ps.setString(paramIndex++, "%" + stuName + "%");
+            }
+            if (stuAge != null) {
+                ps.setInt(paramIndex++, stuAge);
+            }
+            ps.setInt(paramIndex++, index);
+            ps.setInt(paramIndex++, pageSize);
+            
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                Student stu = new Student();
+                stu.setStuNo(rs.getInt("stuNo"));
+                stu.setStuName(rs.getString("stuName"));
+                stu.setStuAge(rs.getInt("stuAge"));
+                list.add(stu);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeResources(rs, ps, conn);
+        }
+        return list;
+    }
+    
+    @Override
+    public List<Student> getAllStu(Integer stuNo, String stuName, Integer stuAge) {
+        StringBuilder sql = new StringBuilder("SELECT stuNo, stuName, stuAge FROM student WHERE 1=1");
+        Connection conn = DBUtil.getConnection();
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        List<Student> list = new ArrayList<>();
+        try {
+            // 动态构建SQL条件
+            if (stuNo != null) {
+                sql.append(" AND stuNo = ?");
+            }
+            if (stuName != null && !stuName.trim().isEmpty()) {
+                sql.append(" AND stuName LIKE ?");
+            }
+            if (stuAge != null) {
+                sql.append(" AND stuAge = ?");
+            }
+            
+            ps = conn.prepareStatement(sql.toString());
+            int paramIndex = 1;
+            if (stuNo != null) {
+                ps.setInt(paramIndex++, stuNo);
+            }
+            if (stuName != null && !stuName.trim().isEmpty()) {
+                ps.setString(paramIndex++, "%" + stuName + "%");
+            }
+            if (stuAge != null) {
+                ps.setInt(paramIndex++, stuAge);
+            }
+            
+            rs = ps.executeQuery();
+            while (rs.next()) {
+                Student stu = new Student();
+                stu.setStuNo(rs.getInt("stuNo"));
+                stu.setStuName(rs.getString("stuName"));
+                stu.setStuAge(rs.getInt("stuAge"));
+                list.add(stu);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            closeResources(rs, ps, conn);
+        }
+        return list;
+    }
 }
