@@ -31,7 +31,20 @@ pageEncoding="UTF-8"%>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <!-- 操作按钮区域 -->
       <div class="mb-6 flex flex-wrap gap-4">
-        <a href="addStu.jsp" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
+        <c:url var="addStuUrl" value="addStu.jsp">
+          <c:param name="returnView" value="getStuPage" />
+          <c:param name="pageNow" value="${page.pageNow}" />
+          <c:if test="${not empty searchStuNo}">
+            <c:param name="searchStuNo" value="${searchStuNo}" />
+          </c:if>
+          <c:if test="${not empty searchStuName}">
+            <c:param name="searchStuName" value="${searchStuName}" />
+          </c:if>
+          <c:if test="${not empty searchStuAge}">
+            <c:param name="searchStuAge" value="${searchStuAge}" />
+          </c:if>
+        </c:url>
+        <a href="${addStuUrl}" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5">
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
           </svg>
@@ -76,15 +89,24 @@ pageEncoding="UTF-8"%>
           </div>
           
           <div class="flex-1 min-w-[200px]">
-            <label for="searchStuAge" class="block text-sm font-medium text-gray-700 mb-2">年龄</label>
-            <input
-              type="text"
-              id="searchStuAge"
-              name="stuAge"
-              value="${searchStuAge}"
-              placeholder="请输入年龄"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-            />
+            <label class="block text-sm font-medium text-gray-700 mb-2">年龄范围</label>
+            <div class="flex items-center space-x-2">
+              <input
+                type="number"
+                name="startAge"
+                value="${searchStartAge}"
+                placeholder="起始"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              />
+              <span class="text-gray-500">-</span>
+              <input
+                type="number"
+                name="endAge"
+                value="${searchEndAge}"
+                placeholder="结束"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+              />
+            </div>
           </div>
           
           <div class="flex gap-2">
@@ -213,7 +235,8 @@ pageEncoding="UTF-8"%>
         var url = 'StudentServlet?action=getStuPage&pageNow=' + pageNow;
         var stuNo = document.getElementById('searchStuNo') ? document.getElementById('searchStuNo').value : '';
         var stuName = document.getElementById('searchStuName') ? document.getElementById('searchStuName').value : '';
-        var stuAge = document.getElementById('searchStuAge') ? document.getElementById('searchStuAge').value : '';
+        var startAge = document.querySelector('input[name="startAge"]').value;
+        var endAge = document.querySelector('input[name="endAge"]').value;
         
         if (stuNo && stuNo.trim() !== '') {
           url += '&stuNo=' + encodeURIComponent(stuNo);
@@ -221,8 +244,11 @@ pageEncoding="UTF-8"%>
         if (stuName && stuName.trim() !== '') {
           url += '&stuName=' + encodeURIComponent(stuName);
         }
-        if (stuAge && stuAge.trim() !== '') {
-          url += '&stuAge=' + encodeURIComponent(stuAge);
+        if (startAge && startAge.trim() !== '') {
+          url += '&startAge=' + encodeURIComponent(startAge);
+        }
+        if (endAge && endAge.trim() !== '') {
+          url += '&endAge=' + encodeURIComponent(endAge);
         }
         
         window.location.href = url;
@@ -245,7 +271,8 @@ pageEncoding="UTF-8"%>
         var url = 'StudentServlet?action=toUpdate&stuNo=' + stuNo + '&pageNow=${page.pageNow}';
         var searchStuNo = document.getElementById('searchStuNo') ? document.getElementById('searchStuNo').value : '';
         var searchStuName = document.getElementById('searchStuName') ? document.getElementById('searchStuName').value : '';
-        var searchStuAge = document.getElementById('searchStuAge') ? document.getElementById('searchStuAge').value : '';
+        var searchStartAge = document.querySelector('input[name="startAge"]').value;
+        var searchEndAge = document.querySelector('input[name="endAge"]').value;
         
         if (searchStuNo && searchStuNo.trim() !== '') {
           url += '&searchStuNo=' + encodeURIComponent(searchStuNo);
@@ -253,8 +280,11 @@ pageEncoding="UTF-8"%>
         if (searchStuName && searchStuName.trim() !== '') {
           url += '&searchStuName=' + encodeURIComponent(searchStuName);
         }
-        if (searchStuAge && searchStuAge.trim() !== '') {
-          url += '&searchStuAge=' + encodeURIComponent(searchStuAge);
+        if (searchStartAge && searchStartAge.trim() !== '') {
+          url += '&startAge=' + encodeURIComponent(searchStartAge);
+        }
+        if (searchEndAge && searchEndAge.trim() !== '') {
+          url += '&endAge=' + encodeURIComponent(searchEndAge);
         }
         
         window.location.href = url;
@@ -265,7 +295,8 @@ pageEncoding="UTF-8"%>
           var url = 'StudentServlet?action=delStu&stuNo=' + stuNo + '&pageNow=${page.pageNow}';
           var searchStuNo = document.getElementById('searchStuNo') ? document.getElementById('searchStuNo').value : '';
           var searchStuName = document.getElementById('searchStuName') ? document.getElementById('searchStuName').value : '';
-          var searchStuAge = document.getElementById('searchStuAge') ? document.getElementById('searchStuAge').value : '';
+          var searchStartAge = document.querySelector('input[name="startAge"]').value;
+          var searchEndAge = document.querySelector('input[name="endAge"]').value;
           
           if (searchStuNo && searchStuNo.trim() !== '') {
             url += '&searchStuNo=' + encodeURIComponent(searchStuNo);
@@ -273,8 +304,11 @@ pageEncoding="UTF-8"%>
           if (searchStuName && searchStuName.trim() !== '') {
             url += '&searchStuName=' + encodeURIComponent(searchStuName);
           }
-          if (searchStuAge && searchStuAge.trim() !== '') {
-            url += '&searchStuAge=' + encodeURIComponent(searchStuAge);
+          if (searchStartAge && searchStartAge.trim() !== '') {
+            url += '&startAge=' + encodeURIComponent(searchStartAge);
+          }
+          if (searchEndAge && searchEndAge.trim() !== '') {
+            url += '&endAge=' + encodeURIComponent(searchEndAge);
           }
           
           window.location.href = url;

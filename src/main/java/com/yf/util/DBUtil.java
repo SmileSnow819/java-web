@@ -1,26 +1,34 @@
 package com.yf.util;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.util.Properties;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
 public class DBUtil {
 
-    // 数据库连接配置 (请替换成你的实际配置)
-    private static final String DRIVER = "com.mysql.cj.jdbc.Driver";
-    private static final String URL = "jdbc:mysql://localhost:3306/dbms_demo?serverTimezone=UTC";
-    private static final String USER = "root"; // Use your MySQL user
-    private static final String PASSWORD = "123456"; // 使用您设置的密码
+    private static final Properties props = new Properties();
 
-    // 静态代码块：加载驱动
+    // 静态代码块：加载驱动和配置文件
     static {
         try {
-            Class.forName(DRIVER);
+            // 使用类加载器获取资源的输入流
+            InputStream in = DBUtil.class.getClassLoader().getResourceAsStream("db.properties");
+            if (in == null) {
+                throw new RuntimeException("找不到db.properties配置文件！");
+            }
+            props.load(in);
+            Class.forName(props.getProperty("jdbc.driver"));
+        } catch (IOException e) {
+            System.err.println("加载db.properties文件失败！");
+            throw new RuntimeException(e);
         } catch (ClassNotFoundException e) {
             System.err.println("JDBC驱动加载失败！");
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
     }
 
@@ -28,7 +36,11 @@ public class DBUtil {
     public static Connection getConnection() {
         Connection conn = null;
         try {
-            conn = DriverManager.getConnection(URL, USER, PASSWORD);
+            conn = DriverManager.getConnection(
+                props.getProperty("jdbc.url"),
+                props.getProperty("jdbc.user"),
+                props.getProperty("jdbc.password")
+            );
         } catch (SQLException e) {
             System.err.println("数据库连接失败！");
             e.printStackTrace();

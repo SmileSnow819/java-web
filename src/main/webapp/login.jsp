@@ -8,8 +8,12 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>用户登录 - 学生管理系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <script src="js/tips.js"></script>
   </head>
-  <body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen flex items-center justify-center p-4">
+  <body
+    class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen flex items-center justify-center p-4"
+  >
     <div class="w-full max-w-md">
       <div class="bg-white rounded-2xl shadow-xl p-8">
         <div class="text-center mb-8">
@@ -18,8 +22,18 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
         </div>
 
         <c:if test="${not empty msg}">
-          <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+          <div
+            class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg"
+          >
             ${msg}
+          </div>
+        </c:if>
+
+        <c:if test="${param.logout == 'success'}">
+          <div
+            class="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg"
+          >
+            您已成功退出登录。
           </div>
         </c:if>
 
@@ -27,7 +41,10 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
           <input type="hidden" name="action" value="login" />
 
           <div>
-            <label for="user" class="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              for="user"
+              class="block text-sm font-medium text-gray-700 mb-2"
+            >
               用户名
             </label>
             <input
@@ -41,7 +58,10 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
           </div>
 
           <div>
-            <label for="pwd" class="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              for="pwd"
+              class="block text-sm font-medium text-gray-700 mb-2"
+            >
               密码
             </label>
             <input
@@ -72,5 +92,67 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
         </form>
       </div>
     </div>
+
+    <script>
+      // 检查URL参数，显示相应提示
+      window.onload = function () {
+        const urlParams = new URLSearchParams(window.location.search);
+        const logout = urlParams.get('logout');
+
+        if (logout === 'success') {
+          $tips.success('已成功退出登录');
+          // 清除URL参数
+          window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname
+          );
+        }
+      };
+
+      // 处理登录表单提交
+      async function handleLogin(event) {
+        event.preventDefault();
+
+        const form = event.target;
+        const formData = new FormData(form);
+
+        try {
+          const response = await axios.post('UserServlet', formData);
+
+          // 解析JSON响应
+          let result;
+          if (typeof response.data === 'string') {
+            try {
+              result = JSON.parse(response.data);
+            } catch (e) {
+              // 如果不是JSON，可能是重定向或其他响应
+              if (
+                response.request.responseURL &&
+                response.request.responseURL.includes('StudentServlet')
+              ) {
+                result = { success: true, message: '登录成功' };
+              } else {
+                result = { success: false, message: '登录失败' };
+              }
+            }
+          } else {
+            result = response.data;
+          }
+
+          if (result.success) {
+            $tips.success(result.message + '！正在跳转...');
+            setTimeout(() => {
+              window.location.href = 'StudentServlet?action=getAll';
+            }, 1000);
+          } else {
+            $tips.error(result.message);
+          }
+        } catch (error) {
+          console.error('登录时出错:', error);
+          $tips.error('登录失败，请稍后重试');
+        }
+      }
+    </script>
   </body>
 </html>

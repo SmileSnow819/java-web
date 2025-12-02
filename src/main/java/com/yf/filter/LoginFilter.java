@@ -32,7 +32,8 @@ public class LoginFilter implements Filter {
         boolean isLoginPage = path.equals("/login.jsp") || (path.equals("/UserServlet") &&
                               "login".equals(req.getParameter("action")));
         boolean isRegisterPage = path.equals("/register.jsp") ||
-                                (path.equals("/UserServlet") && "register".equals(req.getParameter("action")));
+                                (path.equals("/UserServlet") && "register".equals(req.getParameter("action"))) ||
+                                (path.equals("/UserServlet") && "checkUsername".equals(req.getParameter("action")));
         boolean isStaticResource = path.startsWith("/css/") || path.startsWith("/js/") ||
                                   path.startsWith("/images/") || path.endsWith(".css") ||
                                   path.endsWith(".js") || path.endsWith(".png") ||

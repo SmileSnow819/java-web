@@ -174,7 +174,7 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
     }
     
     @Override
-    public int getStuCount(Integer stuNo, String stuName, Integer stuAge) {
+    public int getStuCount(Integer stuNo, String stuName, Integer startAge, Integer endAge) {
         StringBuilder sql = new StringBuilder("SELECT COUNT(*) FROM student WHERE 1=1");
         Connection conn = DBUtil.getConnection();
         PreparedStatement ps = null;
@@ -188,8 +188,11 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
             if (stuName != null && !stuName.trim().isEmpty()) {
                 sql.append(" AND stuName LIKE ?");
             }
-            if (stuAge != null) {
-                sql.append(" AND stuAge = ?");
+            if (startAge != null) {
+                sql.append(" AND stuAge >= ?");
+            }
+            if (endAge != null) {
+                sql.append(" AND stuAge <= ?");
             }
             
             ps = conn.prepareStatement(sql.toString());
@@ -200,8 +203,11 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
             if (stuName != null && !stuName.trim().isEmpty()) {
                 ps.setString(paramIndex++, "%" + stuName + "%");
             }
-            if (stuAge != null) {
-                ps.setInt(paramIndex++, stuAge);
+            if (startAge != null) {
+                ps.setInt(paramIndex++, startAge);
+            }
+            if (endAge != null) {
+                ps.setInt(paramIndex++, endAge);
             }
             
             rs = ps.executeQuery();
@@ -217,7 +223,7 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
     }
     
     @Override
-    public List<Student> getStuPage(int index, int pageSize, Integer stuNo, String stuName, Integer stuAge) {
+    public List<Student> getStuPage(int index, int pageSize, Integer stuNo, String stuName, Integer startAge, Integer endAge) {
         StringBuilder sql = new StringBuilder("SELECT stuNo, stuName, stuAge FROM student WHERE 1=1");
         Connection conn = DBUtil.getConnection();
         PreparedStatement ps = null;
@@ -231,8 +237,11 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
             if (stuName != null && !stuName.trim().isEmpty()) {
                 sql.append(" AND stuName LIKE ?");
             }
-            if (stuAge != null) {
-                sql.append(" AND stuAge = ?");
+            if (startAge != null) {
+                sql.append(" AND stuAge >= ?");
+            }
+            if (endAge != null) {
+                sql.append(" AND stuAge <= ?");
             }
             sql.append(" LIMIT ?, ?");
             
@@ -244,8 +253,11 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
             if (stuName != null && !stuName.trim().isEmpty()) {
                 ps.setString(paramIndex++, "%" + stuName + "%");
             }
-            if (stuAge != null) {
-                ps.setInt(paramIndex++, stuAge);
+            if (startAge != null) {
+                ps.setInt(paramIndex++, startAge);
+            }
+            if (endAge != null) {
+                ps.setInt(paramIndex++, endAge);
             }
             ps.setInt(paramIndex++, index);
             ps.setInt(paramIndex++, pageSize);
@@ -267,7 +279,7 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
     }
     
     @Override
-    public List<Student> getAllStu(Integer stuNo, String stuName, Integer stuAge) {
+    public List<Student> getAllStu(Integer stuNo, String stuName, Integer startAge, Integer endAge) {
         StringBuilder sql = new StringBuilder("SELECT stuNo, stuName, stuAge FROM student WHERE 1=1");
         Connection conn = DBUtil.getConnection();
         PreparedStatement ps = null;
@@ -281,8 +293,11 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
             if (stuName != null && !stuName.trim().isEmpty()) {
                 sql.append(" AND stuName LIKE ?");
             }
-            if (stuAge != null) {
-                sql.append(" AND stuAge = ?");
+            if (startAge != null) {
+                sql.append(" AND stuAge >= ?");
+            }
+            if (endAge != null) {
+                sql.append(" AND stuAge <= ?");
             }
             
             ps = conn.prepareStatement(sql.toString());
@@ -293,8 +308,11 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
             if (stuName != null && !stuName.trim().isEmpty()) {
                 ps.setString(paramIndex++, "%" + stuName + "%");
             }
-            if (stuAge != null) {
-                ps.setInt(paramIndex++, stuAge);
+            if (startAge != null) {
+                ps.setInt(paramIndex++, startAge);
+            }
+            if (endAge != null) {
+                ps.setInt(paramIndex++, endAge);
             }
             
             rs = ps.executeQuery();

@@ -18,9 +18,9 @@ public interface StudentDao {
     
     // 带搜索条件的方法:
     // 获取符合条件的总数量
-    int getStuCount(Integer stuNo, String stuName, Integer stuAge);
+    int getStuCount(Integer stuNo, String stuName, Integer startAge, Integer endAge);
     // 获取符合条件的分页信息
-    List<Student> getStuPage(int index, int pageSize, Integer stuNo, String stuName, Integer stuAge);
+    List<Student> getStuPage(int index, int pageSize, Integer stuNo, String stuName, Integer startAge, Integer endAge);
     // 获取符合条件的所有学生
-    List<Student> getAllStu(Integer stuNo, String stuName, Integer stuAge);
+    List<Student> getAllStu(Integer stuNo, String stuName, Integer startAge, Integer endAge);
 }

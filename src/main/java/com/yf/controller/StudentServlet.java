@@ -83,24 +83,35 @@ public class StudentServlet extends HttpServlet {
             stuName = null;
         }
         
-        Integer stuAge = null;
-        String stuAgeStr = req.getParameter("stuAge");
-        if (stuAgeStr != null && !stuAgeStr.trim().isEmpty()) {
+        Integer startAge = null;
+        String startAgeStr = req.getParameter("startAge");
+        if (startAgeStr != null && !startAgeStr.trim().isEmpty()) {
             try {
-                stuAge = Integer.parseInt(stuAgeStr);
+                startAge = Integer.parseInt(startAgeStr);
+            } catch (NumberFormatException e) {
+                // 忽略无效的年龄参数
+            }
+        }
+
+        Integer endAge = null;
+        String endAgeStr = req.getParameter("endAge");
+        if (endAgeStr != null && !endAgeStr.trim().isEmpty()) {
+            try {
+                endAge = Integer.parseInt(endAgeStr);
             } catch (NumberFormatException e) {
                 // 忽略无效的年龄参数
             }
         }
         
         // 调: 调用业务层方法（带搜索条件）
-        List<Student> studentList = studentService.getAllStu(stuNo, stuName, stuAge);
+        List<Student> studentList = studentService.getAllStu(stuNo, stuName, startAge, endAge);
 
         // 存: 存储功能结果和查询条件（用于页面回显）
         req.setAttribute("studentList", studentList);
         req.setAttribute("searchStuNo", stuNoStr);
         req.setAttribute("searchStuName", stuName);
-        req.setAttribute("searchStuAge", stuAgeStr);
+        req.setAttribute("searchStartAge", startAgeStr);
+        req.setAttribute("searchEndAge", endAgeStr);
 
         // 转: 请求转发到展示页面
         req.getRequestDispatcher("getAllStu.jsp").forward(req, resp);
@@ -120,6 +131,12 @@ public class StudentServlet extends HttpServlet {
             return;
         }
 
+        // 获取返回视图类型
+        String returnView = req.getParameter("returnView");
+        if (returnView == null || returnView.trim().isEmpty()) {
+            returnView = "getAll"; // 默认返回全查视图
+        }
+
         // 封装 POJO
         Student stu = new Student();
         stu.setStuName(stuName);
@@ -129,19 +146,49 @@ public class StudentServlet extends HttpServlet {
         int num = studentService.addStu(stu);
 
         if (num > 0) { // 录入成功
-            // 获取当前页信息（从session或参数中获取）
-            String pageNow = (String) req.getSession().getAttribute("currentPageNow");
-            if (pageNow == null) {
-                pageNow = "1";
+            // 获取查询条件（从参数中获取）
+            StringBuilder searchParams = new StringBuilder();
+            String searchStuNo = req.getParameter("searchStuNo");
+            String searchStuName = req.getParameter("searchStuName");
+            String searchStartAge = req.getParameter("startAge");
+            String searchEndAge = req.getParameter("endAge");
+            
+            if (searchStuNo != null && !searchStuNo.trim().isEmpty()) {
+                searchParams.append("&stuNo=").append(searchStuNo);
             }
-            // 获取查询条件（从session中获取）
-            String searchParams = (String) req.getSession().getAttribute("searchParams");
-            if (searchParams != null && !searchParams.isEmpty()) {
-                // 转: 重定向到分页界面，保留查询条件和当前页
-                resp.sendRedirect("StudentServlet?action=getStuPage&pageNow=" + pageNow + "&" + searchParams);
+            if (searchStuName != null && !searchStuName.trim().isEmpty()) {
+                searchParams.append("&stuName=").append(java.net.URLEncoder.encode(searchStuName, "UTF-8"));
+            }
+            if (searchStartAge != null && !searchStartAge.trim().isEmpty()) {
+                searchParams.append("&startAge=").append(searchStartAge);
+            }
+            if (searchEndAge != null && !searchEndAge.trim().isEmpty()) {
+                searchParams.append("&endAge=").append(searchEndAge);
+            }
+
+            // 转: 根据返回视图类型重定向
+            if ("getAll".equals(returnView)) {
+                // 返回到全查视图，保留查询条件
+                if (searchParams.length() > 0) {
+                    resp.sendRedirect("StudentServlet?action=getAll" + searchParams.toString());
+                } else {
+                    resp.sendRedirect("StudentServlet?action=getAll");
+                }
             } else {
-                // 转: 重定向到分页界面，保留当前页
-                resp.sendRedirect("StudentServlet?action=getStuPage&pageNow=" + pageNow);
+                // 返回到分页视图，保留当前页和查询条件
+                String pageNow = req.getParameter("pageNow");
+                if (pageNow == null || pageNow.trim().isEmpty()) {
+                    pageNow = (String) req.getSession().getAttribute("currentPageNow");
+                    if (pageNow == null) {
+                        pageNow = "1";
+                    }
+                }
+                
+                if (searchParams.length() > 0) {
+                    resp.sendRedirect("StudentServlet?action=getStuPage&pageNow=" + pageNow + searchParams.toString());
+                } else {
+                    resp.sendRedirect("StudentServlet?action=getStuPage&pageNow=" + pageNow);
+                }
             }
         } else { // 录入失败（可能业务校验失败）
             // 存: 存储功能结果
@@ -163,38 +210,74 @@ public class StudentServlet extends HttpServlet {
         StringBuilder searchParams = new StringBuilder();
         String searchStuNo = req.getParameter("searchStuNo");
         String searchStuName = req.getParameter("searchStuName");
-        String searchStuAge = req.getParameter("searchStuAge");
+        String searchStartAge = req.getParameter("startAge");
+        String searchEndAge = req.getParameter("endAge");
         
-        // 如果没有searchStuNo等参数，尝试从stuNo等参数获取（全查视图的情况）
-        if (searchStuNo == null || searchStuNo.trim().isEmpty()) {
-            String stuNoParam = req.getParameter("stuNo");
-            // 注意：stuNo参数可能是要删除的学号，需要区分
-            // 这里假设如果returnView=getAll，则查询条件在stuNo、stuName、stuAge中
-            // 但这样会有冲突，所以全查视图删除时应该用不同的参数名
-        }
+        // 注意：stuNo参数是要删除的学号，查询条件使用searchStuNo或queryStuNo
         
         // 从请求参数中获取查询条件（全查视图的情况，使用不同的参数名避免冲突）
         String queryStuNo = req.getParameter("queryStuNo");
         String queryStuName = req.getParameter("queryStuName");
-        String queryStuAge = req.getParameter("queryStuAge");
+        String queryStartAge = req.getParameter("queryStartAge");
+        String queryEndAge = req.getParameter("queryEndAge");
+        
+        // 解析查询条件为Integer类型（用于后续查询）
+        Integer stuNoCondition = null;
+        String stuNameCondition = null;
+        Integer startAgeCondition = null;
+        Integer endAgeCondition = null;
         
         // 优先使用queryStuNo等参数（全查视图），否则使用searchStuNo等参数（分页视图）
         if (queryStuNo != null && !queryStuNo.trim().isEmpty()) {
-            searchParams.append("&stuNo=").append(queryStuNo);
+            try {
+                stuNoCondition = Integer.parseInt(queryStuNo);
+                searchParams.append("&stuNo=").append(queryStuNo);
+            } catch (NumberFormatException e) {
+                // 忽略无效的学号参数
+            }
         } else if (searchStuNo != null && !searchStuNo.trim().isEmpty()) {
-            searchParams.append("&stuNo=").append(searchStuNo);
+            try {
+                stuNoCondition = Integer.parseInt(searchStuNo);
+                searchParams.append("&stuNo=").append(searchStuNo);
+            } catch (NumberFormatException e) {
+                // 忽略无效的学号参数
+            }
         }
         
         if (queryStuName != null && !queryStuName.trim().isEmpty()) {
+            stuNameCondition = queryStuName;
             searchParams.append("&stuName=").append(java.net.URLEncoder.encode(queryStuName, "UTF-8"));
         } else if (searchStuName != null && !searchStuName.trim().isEmpty()) {
+            stuNameCondition = searchStuName;
             searchParams.append("&stuName=").append(java.net.URLEncoder.encode(searchStuName, "UTF-8"));
         }
         
-        if (queryStuAge != null && !queryStuAge.trim().isEmpty()) {
-            searchParams.append("&stuAge=").append(queryStuAge);
-        } else if (searchStuAge != null && !searchStuAge.trim().isEmpty()) {
-            searchParams.append("&stuAge=").append(searchStuAge);
+        if (queryStartAge != null && !queryStartAge.trim().isEmpty()) {
+            try {
+                startAgeCondition = Integer.parseInt(queryStartAge);
+                searchParams.append("&startAge=").append(queryStartAge);
+            } catch (NumberFormatException e) {
+            }
+        } else if (searchStartAge != null && !searchStartAge.trim().isEmpty()) {
+            try {
+                startAgeCondition = Integer.parseInt(searchStartAge);
+                searchParams.append("&startAge=").append(searchStartAge);
+            } catch (NumberFormatException e) {
+            }
+        }
+
+        if (queryEndAge != null && !queryEndAge.trim().isEmpty()) {
+            try {
+                endAgeCondition = Integer.parseInt(queryEndAge);
+                searchParams.append("&endAge=").append(queryEndAge);
+            } catch (NumberFormatException e) {
+            }
+        } else if (searchEndAge != null && !searchEndAge.trim().isEmpty()) {
+            try {
+                endAgeCondition = Integer.parseInt(searchEndAge);
+                searchParams.append("&endAge=").append(searchEndAge);
+            } catch (NumberFormatException e) {
+            }
         }
 
         // 调: 调用业务层中删除的方法
@@ -209,15 +292,42 @@ public class StudentServlet extends HttpServlet {
                 resp.sendRedirect("StudentServlet?action=getAll");
             }
         } else {
-            // 返回到分页视图，保留当前页和查询条件
-            String pageNow = req.getParameter("pageNow");
-            if (pageNow == null || pageNow.trim().isEmpty()) {
-                pageNow = (String) req.getSession().getAttribute("currentPageNow");
-                if (pageNow == null) {
-                    pageNow = "1";
+            // 返回到分页视图，需要检查删除后当前页是否还有数据
+            String pageNowStr = req.getParameter("pageNow");
+            int pageNow = 1;
+            if (pageNowStr != null && !pageNowStr.trim().isEmpty()) {
+                try {
+                    pageNow = Integer.parseInt(pageNowStr);
+                } catch (NumberFormatException e) {
+                    pageNow = 1;
+                }
+            } else {
+                String sessionPageNow = (String) req.getSession().getAttribute("currentPageNow");
+                if (sessionPageNow != null) {
+                    try {
+                        pageNow = Integer.parseInt(sessionPageNow);
+                    } catch (NumberFormatException e) {
+                        pageNow = 1;
+                    }
                 }
             }
             
+            // 获取删除后的总记录数
+            int totalCount = studentService.getStuCount(stuNoCondition, stuNameCondition, startAgeCondition, endAgeCondition);
+            
+            // 计算删除后的总页数（每页5条）
+            int pageSize = 5;
+            int totalPages = (totalCount + pageSize - 1) / pageSize; // 向上取整
+            if (totalPages == 0) {
+                totalPages = 1; // 至少有一页，即使没有数据
+            }
+            
+            // 如果当前页大于总页数，则跳转到最后一页
+            if (pageNow > totalPages) {
+                pageNow = totalPages;
+            }
+            
+            // 构建重定向URL
             if (searchParams.length() > 0) {
                 resp.sendRedirect("StudentServlet?action=getStuPage&pageNow=" + pageNow + searchParams.toString());
             } else {
@@ -235,7 +345,8 @@ public class StudentServlet extends HttpServlet {
         String pageNow = req.getParameter("pageNow");
         String searchStuNo = req.getParameter("searchStuNo");
         String searchStuName = req.getParameter("searchStuName");
-        String searchStuAge = req.getParameter("searchStuAge");
+        String searchStartAge = req.getParameter("startAge");
+        String searchEndAge = req.getParameter("endAge");
         
         // 判断是从分页视图还是全查视图跳转的
         String returnView = "getStuPage"; // 默认返回分页视图
@@ -251,7 +362,8 @@ public class StudentServlet extends HttpServlet {
         req.setAttribute("pageNow", pageNow);
         req.setAttribute("searchStuNo", searchStuNo);
         req.setAttribute("searchStuName", searchStuName);
-        req.setAttribute("searchStuAge", searchStuAge);
+        req.setAttribute("searchStartAge", searchStartAge);
+        req.setAttribute("searchEndAge", searchEndAge);
         req.setAttribute("returnView", returnView);
 
         // 转: 请求转发到编辑页面
@@ -284,7 +396,8 @@ public class StudentServlet extends HttpServlet {
         StringBuilder searchParams = new StringBuilder();
         String searchStuNo = req.getParameter("searchStuNo");
         String searchStuName = req.getParameter("searchStuName");
-        String searchStuAge = req.getParameter("searchStuAge");
+        String searchStartAge = req.getParameter("startAge");
+        String searchEndAge = req.getParameter("endAge");
         
         if (searchStuNo != null && !searchStuNo.trim().isEmpty()) {
             searchParams.append("&stuNo=").append(searchStuNo);
@@ -292,8 +405,11 @@ public class StudentServlet extends HttpServlet {
         if (searchStuName != null && !searchStuName.trim().isEmpty()) {
             searchParams.append("&stuName=").append(java.net.URLEncoder.encode(searchStuName, "UTF-8"));
         }
-        if (searchStuAge != null && !searchStuAge.trim().isEmpty()) {
-            searchParams.append("&stuAge=").append(searchStuAge);
+        if (searchStartAge != null && !searchStartAge.trim().isEmpty()) {
+            searchParams.append("&startAge=").append(searchStartAge);
+        }
+        if (searchEndAge != null && !searchEndAge.trim().isEmpty()) {
+            searchParams.append("&endAge=").append(searchEndAge);
         }
 
         // 封装 POJO
@@ -355,11 +471,21 @@ public class StudentServlet extends HttpServlet {
             stuName = null;
         }
         
-        Integer stuAge = null;
-        String stuAgeStr = req.getParameter("stuAge");
-        if (stuAgeStr != null && !stuAgeStr.trim().isEmpty()) {
+        Integer startAge = null;
+        String startAgeStr = req.getParameter("startAge");
+        if (startAgeStr != null && !startAgeStr.trim().isEmpty()) {
             try {
-                stuAge = Integer.parseInt(stuAgeStr);
+                startAge = Integer.parseInt(startAgeStr);
+            } catch (NumberFormatException e) {
+                // 忽略无效的年龄参数
+            }
+        }
+
+        Integer endAge = null;
+        String endAgeStr = req.getParameter("endAge");
+        if (endAgeStr != null && !endAgeStr.trim().isEmpty()) {
+            try {
+                endAge = Integer.parseInt(endAgeStr);
             } catch (NumberFormatException e) {
                 // 忽略无效的年龄参数
             }
@@ -374,20 +500,25 @@ public class StudentServlet extends HttpServlet {
             if (searchParams.length() > 0) searchParams.append("&");
             searchParams.append("stuName=").append(java.net.URLEncoder.encode(stuName, "UTF-8"));
         }
-        if (stuAgeStr != null && !stuAgeStr.trim().isEmpty()) {
+        if (startAgeStr != null && !startAgeStr.trim().isEmpty()) {
             if (searchParams.length() > 0) searchParams.append("&");
-            searchParams.append("stuAge=").append(stuAgeStr);
+            searchParams.append("startAge=").append(startAgeStr);
+        }
+        if (endAgeStr != null && !endAgeStr.trim().isEmpty()) {
+            if (searchParams.length() > 0) searchParams.append("&");
+            searchParams.append("endAge=").append(endAgeStr);
         }
         req.getSession().setAttribute("searchParams", searchParams.toString());
         
         // 调: 调用分页业务（带搜索条件）
-        com.yf.util.PageBean page = studentService.getStuPage(pageNow, stuNo, stuName, stuAge);
+        com.yf.util.PageBean page = studentService.getStuPage(pageNow, stuNo, stuName, startAge, endAge);
         
         // 把分页信息和查询条件保存到request的作用域当中
         req.setAttribute("page", page);
         req.setAttribute("searchStuNo", stuNoStr);
         req.setAttribute("searchStuName", stuName);
-        req.setAttribute("searchStuAge", stuAgeStr);
+        req.setAttribute("searchStartAge", startAgeStr);
+        req.setAttribute("searchEndAge", endAgeStr);
         
         // 跳转至分页页面 (请求转发)
         req.getRequestDispatcher("getStuPage.jsp").forward(req, resp);

@@ -73,12 +73,12 @@ public class StudentServiceImpl implements StudentService {
     }
     
     @Override
-    public List<Student> getAllStu(Integer stuNo, String stuName, Integer stuAge) {
-        return studentDao.getAllStu(stuNo, stuName, stuAge);
+    public List<Student> getAllStu(Integer stuNo, String stuName, Integer startAge, Integer endAge) {
+        return studentDao.getAllStu(stuNo, stuName, startAge, endAge);
     }
     
     @Override
-    public PageBean getStuPage(int pageNow, Integer stuNo, String stuName, Integer stuAge) {
+    public PageBean getStuPage(int pageNow, Integer stuNo, String stuName, Integer startAge, Integer endAge) {
         // 创建分页对象
         PageBean page = new PageBean();
         
@@ -86,13 +86,18 @@ public class StudentServiceImpl implements StudentService {
         page.setPageNow(pageNow);
         
         // 调用功能接口中获取符合条件的总数量
-        int count = studentDao.getStuCount(stuNo, stuName, stuAge);
+        int count = studentDao.getStuCount(stuNo, stuName, startAge, endAge);
         page.setPageCount(count);
         
         // 调用分页数据的方法
-        List<Student> stus = studentDao.getStuPage(page.getStartIndex(), page.getPageSize(), stuNo, stuName, stuAge);
+        List<Student> stus = studentDao.getStuPage(page.getStartIndex(), page.getPageSize(), stuNo, stuName, startAge, endAge);
         page.getList().addAll(stus);
         
         return page;
+    }
+    
+    @Override
+    public int getStuCount(Integer stuNo, String stuName, Integer startAge, Integer endAge) {
+        return studentDao.getStuCount(stuNo, stuName, startAge, endAge);
     }
 }

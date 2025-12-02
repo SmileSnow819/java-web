@@ -24,4 +24,10 @@ public class UserServiceImpl implements UserService {
         // [业务逻辑]：直接调用 DAO 层查询
         return userDao.getUserByCredentials(u_name, u_pwd);
     }
+
+    @Override
+    public User getUserByName(String u_name) {
+        // [业务逻辑]：直接调用 DAO 层查询
+        return userDao.getUserByName(u_name);
+    }
 }

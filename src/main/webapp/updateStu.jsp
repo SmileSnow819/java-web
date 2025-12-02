@@ -1,7 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
-pageEncoding="UTF-8"%>
-<%@ page isELIgnored="false" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+pageEncoding="UTF-8"%> <%@ page isELIgnored="false" %> <%@ taglib
+uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <!DOCTYPE html>
 <html lang="zh-CN">
   <head>
@@ -18,8 +17,15 @@ pageEncoding="UTF-8"%>
           <h1 class="text-2xl font-bold text-gray-800">编辑学生信息</h1>
           <c:if test="${not empty sessionScope.currentUser}">
             <div class="flex items-center space-x-4">
-              <span class="text-gray-700">欢迎，<span class="font-semibold text-blue-600">${sessionScope.currentUser.u_name}</span>！</span>
-              <a href="UserServlet?action=logout" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors">
+              <span class="text-gray-700"
+                >欢迎，<span class="font-semibold text-blue-600"
+                  >${sessionScope.currentUser.u_name}</span
+                >！</span
+              >
+              <a
+                href="UserServlet?action=logout"
+                class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+              >
                 退出登录
               </a>
             </div>
@@ -31,7 +37,9 @@ pageEncoding="UTF-8"%>
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div class="bg-white rounded-lg shadow-xl p-8">
         <c:if test="${not empty msg}">
-          <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+          <div
+            class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg"
+          >
             ${msg}
           </div>
         </c:if>
@@ -41,7 +49,8 @@ pageEncoding="UTF-8"%>
           <input type="hidden" name="pageNow" value="${pageNow}" />
           <input type="hidden" name="searchStuNo" value="${searchStuNo}" />
           <input type="hidden" name="searchStuName" value="${searchStuName}" />
-          <input type="hidden" name="searchStuAge" value="${searchStuAge}" />
+          <input type="hidden" name="startAge" value="${searchStartAge}" />
+          <input type="hidden" name="endAge" value="${searchEndAge}" />
           <input type="hidden" name="returnView" value="${returnView}" />
 
           <div>
@@ -58,7 +67,10 @@ pageEncoding="UTF-8"%>
           </div>
 
           <div>
-            <label for="stuName" class="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              for="stuName"
+              class="block text-sm font-medium text-gray-700 mb-2"
+            >
               姓名 <span class="text-red-500">*</span>
             </label>
             <input
@@ -73,7 +85,10 @@ pageEncoding="UTF-8"%>
           </div>
 
           <div>
-            <label for="stuAge" class="block text-sm font-medium text-gray-700 mb-2">
+            <label
+              for="stuAge"
+              class="block text-sm font-medium text-gray-700 mb-2"
+            >
               年龄 <span class="text-red-500">*</span>
             </label>
             <input
@@ -95,8 +110,18 @@ pageEncoding="UTF-8"%>
               type="submit"
               class="flex-1 bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
             >
-              <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+              <svg
+                class="w-5 h-5 inline mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M5 13l4 4L19 7"
+                ></path>
               </svg>
               确认修改
             </button>
@@ -105,8 +130,18 @@ pageEncoding="UTF-8"%>
               onclick="goBack()"
               class="flex-1 bg-gray-500 text-white py-3 rounded-lg font-semibold hover:bg-gray-600 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
-              <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+              <svg
+                class="w-5 h-5 inline mr-2"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                ></path>
               </svg>
               取消并返回
             </button>
@@ -119,7 +154,7 @@ pageEncoding="UTF-8"%>
       function goBack() {
         var returnView = '${returnView}';
         var url = 'StudentServlet?action=' + returnView;
-        
+
         if (returnView === 'getStuPage') {
           var pageNow = '${pageNow}';
           if (pageNow && pageNow.trim() !== '') {
@@ -128,21 +163,25 @@ pageEncoding="UTF-8"%>
             url += '&pageNow=1';
           }
         }
-        
+
         var searchStuNo = '${searchStuNo}';
         var searchStuName = '${searchStuName}';
-        var searchStuAge = '${searchStuAge}';
-        
+        var searchStartAge = '${searchStartAge}';
+        var searchEndAge = '${searchEndAge}';
+
         if (searchStuNo && searchStuNo.trim() !== '') {
           url += '&stuNo=' + encodeURIComponent(searchStuNo);
         }
         if (searchStuName && searchStuName.trim() !== '') {
           url += '&stuName=' + encodeURIComponent(searchStuName);
         }
-        if (searchStuAge && searchStuAge.trim() !== '') {
-          url += '&stuAge=' + encodeURIComponent(searchStuAge);
+        if (searchStartAge && searchStartAge.trim() !== '') {
+          url += '&startAge=' + encodeURIComponent(searchStartAge);
         }
-        
+        if (searchEndAge && searchEndAge.trim() !== '') {
+          url += '&endAge=' + encodeURIComponent(searchEndAge);
+        }
+
         window.location.href = url;
       }
     </script>
