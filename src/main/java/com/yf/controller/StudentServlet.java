@@ -121,6 +121,14 @@ public class StudentServlet extends HttpServlet {
     private void addStu(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
         // 取: 获取请求中的数据
         String stuName = req.getParameter("stuName");
+        
+        // 检查是否经过过滤器处理
+        String originalName = (String) req.getAttribute("originalName");
+        if (originalName != null) {
+            // 记录过滤信息
+            System.out.println("[StudentServlet] 录入学生 - 姓名已被过滤: \"" + originalName + "\" -> \"" + stuName + "\"");
+        }
+        
         // 安全起见，使用 try-catch 处理 Integer.parseInt
         int stuAge = 0;
         try {
@@ -375,6 +383,14 @@ public class StudentServlet extends HttpServlet {
         // 取: 获取所有参数
         int stuNo = Integer.parseInt(req.getParameter("stuNo"));
         String stuName = req.getParameter("stuName");
+        
+        // 检查是否经过过滤器处理
+        String originalName = (String) req.getAttribute("originalName");
+        if (originalName != null) {
+            // 记录过滤信息
+            System.out.println("[StudentServlet] 编辑学生 - 姓名已被过滤: \"" + originalName + "\" -> \"" + stuName + "\"");
+        }
+        
         int stuAge = Integer.parseInt(req.getParameter("stuAge"));
         
         // 获取返回视图类型

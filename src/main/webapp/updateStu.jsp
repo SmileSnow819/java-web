@@ -33,6 +33,12 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
         </div>
       </div>
     </nav>
+    <div class="bg-blue-50 text-blue-700 px-4 py-2 text-right text-sm">
+      当前在线人数：<span id="onlineCountTop"
+        ><c:out
+          value="${applicationScope.onlineCount != null ? applicationScope.onlineCount : 0}"
+      /></span>
+    </div>
 
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div class="bg-white rounded-lg shadow-xl p-8">
@@ -41,6 +47,40 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
             class="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg"
           >
             ${msg}
+          </div>
+        </c:if>
+
+        <!-- 显示姓名敏感词过滤提示 -->
+        <c:if test="${not empty originalName && not empty safeName}">
+          <div
+            class="mb-6 p-4 bg-orange-50 border border-orange-200 text-orange-700 rounded-lg"
+          >
+            <div class="flex items-center">
+              <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fill-rule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clip-rule="evenodd"
+                ></path>
+              </svg>
+              <strong>敏感词过滤提示：</strong>
+            </div>
+            <p class="mt-2">检测到姓名中包含敏感词，系统已自动过滤：</p>
+            <p class="mt-1">
+              原始输入：<span
+                class="font-mono bg-orange-100 px-2 py-1 rounded text-red-600"
+                >${originalName}</span
+              >
+            </p>
+            <p class="mt-1">
+              过滤结果：<span
+                class="font-mono bg-green-100 px-2 py-1 rounded text-green-600"
+                >${safeName}</span
+              >
+            </p>
+            <p class="mt-2 text-sm text-gray-600">
+              💡 提示：系统会根据敏感词的长度替换为相应数量的 * 字符
+            </p>
           </div>
         </c:if>
 
@@ -77,7 +117,7 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
               type="text"
               id="stuName"
               name="stuName"
-              value="${student.stuName}"
+              value="${not empty safeName ? safeName : student.stuName}"
               required
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
               placeholder="请输入学生姓名"

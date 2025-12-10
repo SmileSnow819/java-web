@@ -83,9 +83,13 @@ public class UserServlet extends HttpServlet {
 
     // --- 退出登录功能 ---
     private void logout(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        // 清除session中的用户信息
+        String username = (String) req.getSession().getAttribute("username");
+        System.out.println("[UserServlet] 用户登出: " + username);
+        
+        // 清除session中的用户信息（这会触发监听器更新在线人数）
         req.getSession().removeAttribute("currentUser");
-        // 可选：使session失效
+        req.getSession().removeAttribute("username");
+        // 使session失效
         req.getSession().invalidate();
         // 重定向到登录页面
         resp.sendRedirect(req.getContextPath() + "/login.jsp?logout=success");
@@ -103,9 +107,46 @@ public class UserServlet extends HttpServlet {
         boolean isAjax = contentType != null && contentType.contains("multipart/form-data");
 
         if (u != null) { // 登录成功
-            // 存: 将用户信息存入 Session
-            req.getSession().setAttribute("currentUser", u);
+            // 获取Session信息用于调试
+            String sessionId = req.getSession().getId();
+            System.out.println("[UserServlet] 用户登录成功: " + u.getU_name());
+            System.out.println("[UserServlet] Session ID: " + sessionId);
             
+            // 存: 将用户信息存入 Session（这会触发监听器更新在线人数）
+            req.getSession().setAttribute("currentUser", u);
+            System.out.println("[UserServlet] 已设置Session属性 currentUser");
+            
+            req.getSession().setAttribute("username", u.getU_name());
+            System.out.println("[UserServlet] 已设置Session属性 username = " + u.getU_name());
+            
+            // 验证Session中的属性
+            System.out.println("[UserServlet] 验证Session属性:");
+            System.out.println("[UserServlet] - currentUser: " + req.getSession().getAttribute("currentUser"));
+            System.out.println("[UserServlet] - username: " + req.getSession().getAttribute("username"));
+            
+            // 检查ServletContext中的在线人数
+            Object onlineCount = req.getSession().getServletContext().getAttribute("onlineCount");
+            System.out.println("[UserServlet] 当前ServletContext.onlineCount = " + onlineCount);
+            
+            // 手动触发在线人数更新（作为监听器的备用方案）
+            // 等待一小段时间让监听器执行
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                // 忽略中断异常
+            }
+            
+            // 再次检查在线人数
+            Object updatedCount = req.getSession().getServletContext().getAttribute("onlineCount");
+            System.out.println("[UserServlet] 等待后的ServletContext.onlineCount = " + updatedCount);
+            
+            // 如果监听器没有更新，手动更新
+            if (updatedCount == null || (Integer) updatedCount == 0) {
+                System.out.println("[UserServlet] 监听器可能未触发，手动更新在线人数");
+                req.getSession().getServletContext().setAttribute("onlineCount", 1);
+                System.out.println("[UserServlet] 手动设置onlineCount = 1");
+            }
+
             if (isAjax) {
                 // AJAX请求返回JSON响应
                 resp.setContentType("application/json;charset=UTF-8");

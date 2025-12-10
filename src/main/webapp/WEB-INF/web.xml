@@ -3,8 +3,65 @@
  "http://java.sun.com/dtd/web-app_2_3.dtd" >
 
 <web-app>
-  <display-name>Archetype Created Web Application</display-name>
-    <welcome-file-list>
-        <welcome-file>login.jsp</welcome-file>
-    </welcome-file-list>
+  <display-name>学生管理系统</display-name>
+  
+  <!-- 字符编码过滤器：必须放在第一位，解决中文乱码问题 -->
+  <filter>
+    <filter-name>EncodingFilter</filter-name>
+    <filter-class>com.yf.filter.CharacterEncodingFilter</filter-class>
+    <init-param>
+      <param-name>encoding</param-name>
+      <param-value>UTF-8</param-value>
+    </init-param>
+  </filter>
+  <filter-mapping>
+    <filter-name>EncodingFilter</filter-name>
+    <url-pattern>/*</url-pattern>
+  </filter-mapping>
+  
+  <!-- 姓名敏感字符过滤器：拦截学生信息录入和编辑操作 -->
+  <filter>
+    <filter-name>NameFilter</filter-name>
+    <filter-class>com.yf.filter.NameFilter</filter-class>
+  </filter>
+  <!-- 过滤器映射：拦截StudentServlet的addStu和updateStu操作 -->
+  <filter-mapping>
+    <filter-name>NameFilter</filter-name>
+    <url-pattern>/StudentServlet</url-pattern>
+    <dispatcher>REQUEST</dispatcher>
+  </filter-mapping>
+  <!-- 同时也拦截JSP页面请求（如果直接访问JSP） -->
+  <filter-mapping>
+    <filter-name>NameFilter</filter-name>
+    <url-pattern>/addStu.jsp</url-pattern>
+  </filter-mapping>
+  <filter-mapping>
+    <filter-name>NameFilter</filter-name>
+    <url-pattern>/updateStu.jsp</url-pattern>
+  </filter-mapping>
+
+  <!-- 在线用户统计监听器：监听Session创建销毁和属性变化 -->
+  <listener>
+    <listener-class>com.yf.listener.UserCountListener</listener-class>
+  </listener>
+
+  <!-- 设置Session超时时间为30分钟 -->
+  <session-config>
+    <session-timeout>30</session-timeout>
+  </session-config>
+
+  <!-- 默认欢迎页面 -->
+  <welcome-file-list>
+    <welcome-file>login.jsp</welcome-file>
+  </welcome-file-list>
+  
+  <!-- 错误页面配置 -->
+  <error-page>
+    <error-code>404</error-code>
+    <location>/login.jsp</location>
+  </error-page>
+  <error-page>
+    <error-code>500</error-code>
+    <location>/login.jsp</location>
+  </error-page>
 </web-app>
