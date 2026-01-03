@@ -41,6 +41,15 @@ pageEncoding="UTF-8"%>
           </svg>
           全查视图
         </a>
+        <button
+          onclick="exportToExcel()"
+          class="inline-flex items-center px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+        >
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          导出Excel
+        </button>
       </div>
 
       <!-- 搜索条件表单 -->
@@ -274,6 +283,29 @@ pageEncoding="UTF-8"%>
         }
         
         goToPage(customPage);
+      }
+
+      function exportToExcel() {
+        var url = 'StudentServlet?action=exportExcel';
+        var searchStuNo = document.getElementById('searchStuNo') ? document.getElementById('searchStuNo').value : '';
+        var searchStuName = document.getElementById('searchStuName') ? document.getElementById('searchStuName').value : '';
+        var searchStartAge = document.querySelector('input[name="startAge"]').value;
+        var searchEndAge = document.querySelector('input[name="endAge"]').value;
+        
+        if (searchStuNo && searchStuNo.trim() !== '') {
+          url += '&stuNo=' + encodeURIComponent(searchStuNo);
+        }
+        if (searchStuName && searchStuName.trim() !== '') {
+          url += '&stuName=' + encodeURIComponent(searchStuName);
+        }
+        if (searchStartAge && searchStartAge.trim() !== '') {
+          url += '&startAge=' + encodeURIComponent(searchStartAge);
+        }
+        if (searchEndAge && searchEndAge.trim() !== '') {
+          url += '&endAge=' + encodeURIComponent(searchEndAge);
+        }
+        
+        window.location.href = url;
       }
 
       function goToDetail(stuNo) {

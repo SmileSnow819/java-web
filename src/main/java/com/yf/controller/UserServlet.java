@@ -5,10 +5,13 @@ import com.yf.service.UserService;
 import com.yf.service.impl.UserServiceImpl;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.util.Base64;
 
 @WebServlet("/UserServlet")
 public class UserServlet extends HttpServlet {
@@ -99,6 +102,7 @@ public class UserServlet extends HttpServlet {
     private void login(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
         String user = req.getParameter("user");
         String pwd = req.getParameter("pwd");
+        String remember = req.getParameter("remember"); // 是否记住密码
 
         User u = userService.login(user, pwd);
         
@@ -116,6 +120,44 @@ public class UserServlet extends HttpServlet {
             req.getSession().setAttribute("currentUser", u);
             req.getSession().setAttribute("username", u.getU_name());
             System.out.println("[UserServlet] 已设置Session属性 currentUser 和 username");
+            
+            // 处理记住密码功能
+            if ("true".equals(remember) && user != null && pwd != null) {
+                // 用户选择了记住密码，保存到Cookie
+                // 使用Base64编码（简单加密，实际项目中应使用更安全的加密方式）
+                try {
+                    String encodedUser = Base64.getEncoder().encodeToString(user.getBytes("UTF-8"));
+                    String encodedPwd = Base64.getEncoder().encodeToString(pwd.getBytes("UTF-8"));
+                    
+                    // 创建Cookie，设置7天过期
+                    Cookie usernameCookie = new Cookie("savedUsername", URLEncoder.encode(encodedUser, "UTF-8"));
+                    usernameCookie.setMaxAge(7 * 24 * 60 * 60); // 7天
+                    usernameCookie.setPath(req.getContextPath());
+                    resp.addCookie(usernameCookie);
+                    
+                    Cookie passwordCookie = new Cookie("savedPassword", URLEncoder.encode(encodedPwd, "UTF-8"));
+                    passwordCookie.setMaxAge(7 * 24 * 60 * 60); // 7天
+                    passwordCookie.setPath(req.getContextPath());
+                    resp.addCookie(passwordCookie);
+                    
+                    System.out.println("[UserServlet] 已保存记住密码Cookie");
+                } catch (Exception e) {
+                    System.out.println("[UserServlet] 保存Cookie失败: " + e.getMessage());
+                }
+            } else {
+                // 用户没有选择记住密码，清除之前的Cookie
+                Cookie[] cookies = req.getCookies();
+                if (cookies != null) {
+                    for (Cookie cookie : cookies) {
+                        if ("savedUsername".equals(cookie.getName()) || "savedPassword".equals(cookie.getName())) {
+                            cookie.setMaxAge(0);
+                            cookie.setPath(req.getContextPath());
+                            resp.addCookie(cookie);
+                        }
+                    }
+                }
+                System.out.println("[UserServlet] 已清除记住密码Cookie");
+            }
             
             // 监听器会自动更新在线人数，无需手动处理
 

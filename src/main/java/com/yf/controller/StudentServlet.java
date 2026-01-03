@@ -7,6 +7,8 @@ import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.IOUtils;
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -17,6 +19,9 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -114,6 +119,9 @@ public class StudentServlet extends HttpServlet {
                 break;
             case "getDetail":
                 getDetail(req, resp); // 查看学生详情
+                break;
+            case "exportExcel":
+                exportExcel(req, resp); // 导出Excel
                 break;
             default:
                 getAllStu(req, resp);
@@ -743,5 +751,133 @@ public class StudentServlet extends HttpServlet {
         
         // 跳转至分页页面 (请求转发)
         req.getRequestDispatcher("getStuPage.jsp").forward(req, resp);
+    }
+    
+    // --- 7. 导出Excel ---
+    private void exportExcel(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        System.out.println("[StudentServlet] 开始导出Excel");
+        
+        // 获取查询条件
+        Integer stuNo = null;
+        String stuNoStr = req.getParameter("stuNo");
+        if (stuNoStr != null && !stuNoStr.trim().isEmpty()) {
+            try {
+                stuNo = Integer.parseInt(stuNoStr);
+            } catch (NumberFormatException e) {
+                // 忽略无效的学号参数
+            }
+        }
+        
+        String stuName = req.getParameter("stuName");
+        if (stuName != null && stuName.trim().isEmpty()) {
+            stuName = null;
+        }
+        
+        Integer startAge = null;
+        String startAgeStr = req.getParameter("startAge");
+        if (startAgeStr != null && !startAgeStr.trim().isEmpty()) {
+            try {
+                startAge = Integer.parseInt(startAgeStr);
+            } catch (NumberFormatException e) {
+                // 忽略无效的年龄参数
+            }
+        }
+
+        Integer endAge = null;
+        String endAgeStr = req.getParameter("endAge");
+        if (endAgeStr != null && !endAgeStr.trim().isEmpty()) {
+            try {
+                endAge = Integer.parseInt(endAgeStr);
+            } catch (NumberFormatException e) {
+                // 忽略无效的年龄参数
+            }
+        }
+        
+        // 根据查询条件获取学生列表
+        List<Student> studentList = studentService.getAllStu(stuNo, stuName, startAge, endAge);
+        
+        // 创建Excel工作簿
+        Workbook workbook = new XSSFWorkbook();
+        Sheet sheet = workbook.createSheet("学生信息");
+        
+        // 创建标题样式
+        CellStyle headerStyle = workbook.createCellStyle();
+        Font headerFont = workbook.createFont();
+        headerFont.setBold(true);
+        headerFont.setFontHeightInPoints((short) 12);
+        headerStyle.setFont(headerFont);
+        headerStyle.setFillForegroundColor(IndexedColors.SKY_BLUE.getIndex());
+        headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        headerStyle.setAlignment(HorizontalAlignment.CENTER);
+        headerStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        headerStyle.setBorderBottom(BorderStyle.THIN);
+        headerStyle.setBorderTop(BorderStyle.THIN);
+        headerStyle.setBorderLeft(BorderStyle.THIN);
+        headerStyle.setBorderRight(BorderStyle.THIN);
+        
+        // 创建数据样式
+        CellStyle dataStyle = workbook.createCellStyle();
+        dataStyle.setBorderBottom(BorderStyle.THIN);
+        dataStyle.setBorderTop(BorderStyle.THIN);
+        dataStyle.setBorderLeft(BorderStyle.THIN);
+        dataStyle.setBorderRight(BorderStyle.THIN);
+        dataStyle.setAlignment(HorizontalAlignment.CENTER);
+        dataStyle.setVerticalAlignment(VerticalAlignment.CENTER);
+        
+        // 创建标题行
+        Row headerRow = sheet.createRow(0);
+        String[] headers = {"学号", "姓名", "年龄", "头像路径"};
+        for (int i = 0; i < headers.length; i++) {
+            Cell cell = headerRow.createCell(i);
+            cell.setCellValue(headers[i]);
+            cell.setCellStyle(headerStyle);
+        }
+        
+        // 填充数据
+        int rowNum = 1;
+        for (Student stu : studentList) {
+            Row row = sheet.createRow(rowNum++);
+            
+            Cell cell0 = row.createCell(0);
+            cell0.setCellValue(stu.getStuNo());
+            cell0.setCellStyle(dataStyle);
+            
+            Cell cell1 = row.createCell(1);
+            cell1.setCellValue(stu.getStuName());
+            cell1.setCellStyle(dataStyle);
+            
+            Cell cell2 = row.createCell(2);
+            cell2.setCellValue(stu.getStuAge());
+            cell2.setCellStyle(dataStyle);
+            
+            Cell cell3 = row.createCell(3);
+            cell3.setCellValue(stu.getStuImg() != null ? stu.getStuImg() : "");
+            cell3.setCellStyle(dataStyle);
+        }
+        
+        // 自动调整列宽
+        for (int i = 0; i < headers.length; i++) {
+            sheet.autoSizeColumn(i);
+            // 设置最小列宽
+            sheet.setColumnWidth(i, Math.max(sheet.getColumnWidth(i), 3000));
+        }
+        
+        // 设置响应头
+        String fileName = "学生信息_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".xlsx";
+        // 处理中文文件名
+        String encodedFileName = java.net.URLEncoder.encode(fileName, "UTF-8").replace("+", "%20");
+        
+        resp.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        resp.setHeader("Content-Disposition", "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName);
+        resp.setCharacterEncoding("UTF-8");
+        
+        // 将Excel写入响应流
+        OutputStream out = resp.getOutputStream();
+        workbook.write(out);
+        workbook.close();
+        out.flush();
+        out.close();
+        
+        System.out.println("[StudentServlet] Excel导出成功，共导出 " + studentList.size() + " 条记录");
     }
 }

@@ -74,6 +74,23 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
             />
           </div>
 
+          <!-- 记住密码选项 -->
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="remember"
+              name="remember"
+              value="true"
+              class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <label
+              for="remember"
+              class="ml-2 block text-sm text-gray-700 cursor-pointer"
+            >
+              记住密码
+            </label>
+          </div>
+
           <button
             type="submit"
             class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
@@ -94,8 +111,24 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
     </div>
 
     <script>
-      // 检查URL参数，显示相应提示
+      // 页面加载时读取Cookie并填充表单
       window.onload = function () {
+        // 读取保存的用户名和密码
+        const savedUsername = getCookie('savedUsername');
+        const savedPassword = getCookie('savedPassword');
+        
+        if (savedUsername) {
+          document.getElementById('user').value = savedUsername;
+        }
+        if (savedPassword) {
+          document.getElementById('pwd').value = savedPassword;
+          // 如果密码存在，自动勾选记住密码
+          if (savedPassword) {
+            document.getElementById('remember').checked = true;
+          }
+        }
+
+        // 检查URL参数，显示相应提示
         const urlParams = new URLSearchParams(window.location.search);
         const logout = urlParams.get('logout');
 
@@ -109,6 +142,25 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
           );
         }
       };
+
+      // 获取Cookie的辅助函数
+      function getCookie(name) {
+        const value = "; " + document.cookie;
+        const parts = value.split("; " + name + "=");
+        if (parts.length === 2) {
+          const cookieValue = decodeURIComponent(parts.pop().split(";").shift());
+          // 尝试Base64解码
+          try {
+            // Base64解码
+            const decoded = atob(cookieValue);
+            return decoded;
+          } catch (e) {
+            // 如果解码失败，返回原值
+            return cookieValue;
+          }
+        }
+        return null;
+      }
 
       // 处理登录表单提交
       async function handleLogin(event) {
