@@ -193,6 +193,11 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
                     <th
                       class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider"
                     >
+                      头像
+                    </th>
+                    <th
+                      class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider"
+                    >
                       学号
                     </th>
                     <th
@@ -215,6 +220,23 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
                 <tbody class="bg-white divide-y divide-gray-200">
                   <c:forEach var="stu" items="${studentList}">
                     <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <c:choose>
+                          <c:when test="${not empty stu.stuImg}">
+                            <img
+                              src="${pageContext.request.contextPath}/${stu.stuImg}"
+                              alt="${stu.stuName}"
+                              class="w-12 h-12 rounded-full object-cover border-2 border-gray-300"
+                              onerror="this.src='${pageContext.request.contextPath}/images/default-avatar.png'"
+                            />
+                          </c:when>
+                          <c:otherwise>
+                            <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs">
+                              无头像
+                            </div>
+                          </c:otherwise>
+                        </c:choose>
+                      </td>
                       <td
                         class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
                       >

@@ -8,6 +8,7 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>录入学生信息</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
   </head>
   <body class="bg-gray-50 min-h-screen">
     <!-- 顶部导航栏 -->
@@ -63,7 +64,7 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
           </div>
         </c:if>
 
-        <form action="StudentServlet" method="post" class="space-y-6">
+        <form action="StudentServlet" method="post" enctype="multipart/form-data" class="space-y-6">
           <input type="hidden" name="action" value="addStu" />
           <input
             type="hidden"
@@ -94,6 +95,50 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
               value="${param.searchStuAge}"
             />
           </c:if>
+
+          <!-- 学生头像上传 -->
+          <div>
+            <label
+              for="stuImg"
+              class="block text-sm font-medium text-gray-700 mb-2"
+            >
+              学生头像 <span class="text-red-500">*</span>
+            </label>
+            <div class="space-y-4">
+              <input
+                type="file"
+                id="stuImg"
+                name="stuImg"
+                accept="image/*"
+                onchange="handleFileChange(event)"
+                required
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+              />
+              <p class="text-sm text-gray-500">支持格式：JPG、PNG、GIF等图片格式</p>
+              
+              <!-- 图片预览区域 -->
+              <div id="imagePreviewContainer" class="mt-4" style="display: none;">
+                <p class="text-sm font-medium text-gray-700 mb-2">预览：</p>
+                <div class="relative inline-block">
+                  <img
+                    id="imagePreviewImg"
+                    src=""
+                    alt="头像预览"
+                    class="w-32 h-32 object-cover rounded-lg border-2 border-gray-300 shadow-md"
+                  />
+                  <button
+                    type="button"
+                    id="clearPreviewBtn"
+                    onclick="clearPreview()"
+                    class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
+                    title="清除预览"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div>
             <label
@@ -211,5 +256,105 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
         </form>
       </div>
     </div>
+
+    <div id="app"></div>
+    <script>
+      const { createApp } = Vue;
+      
+      const app = createApp({
+        data() {
+          return {
+            imagePreview: null
+          };
+        },
+        methods: {
+          handleFileChange(event) {
+            const file = event.target.files[0];
+            if (file) {
+              // 验证文件类型
+              if (!file.type.startsWith('image/')) {
+                alert('请选择图片文件！');
+                event.target.value = '';
+                this.imagePreview = null;
+                return;
+              }
+              
+              // 验证文件大小（限制为5MB）
+              if (file.size > 5 * 1024 * 1024) {
+                alert('图片大小不能超过5MB！');
+                event.target.value = '';
+                this.imagePreview = null;
+                return;
+              }
+              
+              // 创建预览
+              const reader = new FileReader();
+              reader.onload = (e) => {
+                this.imagePreview = e.target.result;
+              };
+              reader.readAsDataURL(file);
+            } else {
+              this.imagePreview = null;
+            }
+          },
+          clearPreview() {
+            this.imagePreview = null;
+            document.getElementById('stuImg').value = '';
+          }
+        }
+      });
+      
+      // 挂载Vue到app div，通过全局方法处理文件选择事件
+      app.mount('#app');
+      
+      // 将handleFileChange方法暴露到全局，供文件输入框调用
+      window.vueApp = app;
+    </script>
+    
+    <script>
+      // 直接在文件输入框上使用内联事件处理器
+      function handleFileChange(event) {
+        const file = event.target.files[0];
+        const previewContainer = document.getElementById('imagePreviewContainer');
+        const previewImg = document.getElementById('imagePreviewImg');
+        const clearBtn = document.getElementById('clearPreviewBtn');
+        
+        if (file) {
+          // 验证文件类型
+          if (!file.type.startsWith('image/')) {
+            alert('请选择图片文件！');
+            event.target.value = '';
+            if (previewContainer) previewContainer.style.display = 'none';
+            return;
+          }
+          
+          // 验证文件大小（限制为5MB）
+          if (file.size > 5 * 1024 * 1024) {
+            alert('图片大小不能超过5MB！');
+            event.target.value = '';
+            if (previewContainer) previewContainer.style.display = 'none';
+            return;
+          }
+          
+          // 创建预览
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            if (previewImg) {
+              previewImg.src = e.target.result;
+              if (previewContainer) previewContainer.style.display = 'block';
+            }
+          };
+          reader.readAsDataURL(file);
+        } else {
+          if (previewContainer) previewContainer.style.display = 'none';
+        }
+      }
+      
+      function clearPreview() {
+        document.getElementById('stuImg').value = '';
+        const previewContainer = document.getElementById('imagePreviewContainer');
+        if (previewContainer) previewContainer.style.display = 'none';
+      }
+    </script>
   </body>
 </html>

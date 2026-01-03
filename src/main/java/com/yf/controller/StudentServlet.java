@@ -3,13 +3,22 @@ package com.yf.controller;
 import com.yf.model.Student;
 import com.yf.service.StudentService;
 import com.yf.service.impl.StudentServiceImpl;
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
+import org.apache.commons.io.IOUtils;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.UUID;
 
 @WebServlet("/StudentServlet")
 public class StudentServlet extends HttpServlet {
@@ -35,11 +44,54 @@ public class StudentServlet extends HttpServlet {
         }
         
         // 使用 action 参数进行多功能分发
-        String action = req.getParameter("action");
+        String action = null;
+        
+        // 检查是否为multipart请求（文件上传）
+        if (ServletFileUpload.isMultipartContent(req)) {
+            // 对于multipart请求，action参数可能在URL中，也可能在表单数据中
+            // 先尝试从URL参数获取
+            action = req.getParameter("action");
+            
+            // 如果URL中没有action，说明在表单数据中
+            // 对于这种情况，我们需要从表单数据中解析action
+            // 但为了避免重复解析请求体，我们创建一个包装请求来缓存解析结果
+            if (action == null) {
+                try {
+                    // 创建一个可重用的请求包装器
+                    // 先解析一次获取action
+                    DiskFileItemFactory factory = new DiskFileItemFactory();
+                    ServletFileUpload upload = new ServletFileUpload(factory);
+                    upload.setHeaderEncoding("UTF-8");
+                    
+                    // 解析请求（注意：这只能读取一次）
+                    java.util.List<FileItem> items = upload.parseRequest(req);
+                    
+                    // 从解析结果中查找action参数
+                    for (FileItem item : items) {
+                        if (item.isFormField() && "action".equals(item.getFieldName())) {
+                            action = item.getString("UTF-8");
+                            break;
+                        }
+                    }
+                    
+                    // 将解析结果存储到request attribute中，供后续方法使用
+                    req.setAttribute("parsedFileItems", items);
+                    
+                } catch (Exception e) {
+                    System.out.println("[StudentServlet] 解析multipart请求失败: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            // 普通请求，直接获取参数
+            action = req.getParameter("action");
+        }
 
         if (action == null) {
             action = "getAll"; // 默认行为
         }
+        
+        System.out.println("[StudentServlet] doPost - action: " + action + ", isMultipart: " + ServletFileUpload.isMultipartContent(req));
 
         switch (action) {
             case "getAll":
@@ -119,47 +171,156 @@ public class StudentServlet extends HttpServlet {
 
     // --- 2. 录入学生 ---
     private void addStu(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
-        // 取: 获取请求中的数据
-        String stuName = req.getParameter("stuName");
+        System.out.println("[StudentServlet] 开始处理学生录入请求");
         
-        // 检查是否经过过滤器处理
-        String originalName = (String) req.getAttribute("originalName");
-        if (originalName != null) {
-            // 记录过滤信息
-            System.out.println("[StudentServlet] 录入学生 - 姓名已被过滤: \"" + originalName + "\" -> \"" + stuName + "\"");
-        }
-        
-        // 安全起见，使用 try-catch 处理 Integer.parseInt
-        int stuAge = 0;
-        try {
-            stuAge = Integer.parseInt(req.getParameter("stuAge"));
-        } catch (NumberFormatException e) {
-            req.setAttribute("msg", "年龄输入格式有误！");
+        // 检查是否为multipart请求（文件上传）
+        if (!ServletFileUpload.isMultipartContent(req)) {
+            System.out.println("[StudentServlet] 错误：不是multipart请求");
+            req.setAttribute("msg", "请求格式错误！请确保表单设置了enctype=\"multipart/form-data\"");
             req.getRequestDispatcher("addStu.jsp").forward(req, resp);
             return;
         }
 
-        // 获取返回视图类型
-        String returnView = req.getParameter("returnView");
-        if (returnView == null || returnView.trim().isEmpty()) {
-            returnView = "getAll"; // 默认返回全查视图
+        // 初始化变量
+        String stuName = null;
+        int stuAge = 0;
+        String stuImg = null;  // 图片路径
+        String returnView = "getAll";
+        String searchStuNo = null;
+        String searchStuName = null;
+        String searchStartAge = null;
+        String searchEndAge = null;
+
+        List<FileItem> items = null;
+        
+        try {
+            // 检查是否已经解析过（从doPost方法传递过来的）
+            @SuppressWarnings("unchecked")
+            List<FileItem> cachedItems = (List<FileItem>) req.getAttribute("parsedFileItems");
+            
+            if (cachedItems != null) {
+                // 使用已解析的items
+                System.out.println("[StudentServlet] 使用已缓存的解析结果");
+                items = cachedItems;
+            } else {
+                // 需要重新解析请求
+                System.out.println("[StudentServlet] 开始解析multipart请求");
+                DiskFileItemFactory factory = new DiskFileItemFactory();
+                ServletFileUpload upload = new ServletFileUpload(factory);
+                upload.setHeaderEncoding("UTF-8");  // 设置编码
+                
+                // 解析请求
+                items = upload.parseRequest(req);
+            }
+            
+            // 获取上传文件的保存目录
+            String uploadPath = req.getServletContext().getRealPath("/images");
+            File uploadDir = new File(uploadPath);
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
+            }
+
+            // 遍历所有表单项
+            for (FileItem item : items) {
+                if (item.isFormField()) {
+                    // 普通表单字段
+                    String fieldName = item.getFieldName();
+                    String fieldValue = item.getString("UTF-8");
+                    
+                    switch (fieldName) {
+                        case "stuName":
+                            stuName = fieldValue;
+                            break;
+                        case "stuAge":
+                            try {
+                                stuAge = Integer.parseInt(fieldValue);
+                            } catch (NumberFormatException e) {
+                                req.setAttribute("msg", "年龄输入格式有误！");
+                                req.getRequestDispatcher("addStu.jsp").forward(req, resp);
+                                return;
+                            }
+                            break;
+                        case "returnView":
+                            returnView = fieldValue;
+                            break;
+                        case "searchStuNo":
+                            searchStuNo = fieldValue;
+                            break;
+                        case "searchStuName":
+                            searchStuName = fieldValue;
+                            break;
+                        case "startAge":
+                            searchStartAge = fieldValue;
+                            break;
+                        case "endAge":
+                            searchEndAge = fieldValue;
+                            break;
+                    }
+                } else {
+                    // 文件字段
+                    if ("stuImg".equals(item.getFieldName()) && item.getSize() > 0) {
+                        String fileName = item.getName();
+                        if (fileName != null && !fileName.trim().isEmpty()) {
+                            // 生成唯一文件名（使用UUID避免重名）
+                            String ext = fileName.substring(fileName.lastIndexOf("."));
+                            String newFileName = UUID.randomUUID().toString() + ext;
+                            String filePath = uploadPath + File.separator + newFileName;
+                            
+                            // 保存文件
+                            File storeFile = new File(filePath);
+                            try (InputStream is = item.getInputStream();
+                                 FileOutputStream fos = new FileOutputStream(storeFile)) {
+                                IOUtils.copy(is, fos);
+                            }
+                            
+                            // 保存相对路径到数据库（相对于webapp根目录）
+                            stuImg = "images/" + newFileName;
+                            System.out.println("[StudentServlet] 图片上传成功: " + stuImg);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("[StudentServlet] 解析请求时发生异常: " + e.getMessage());
+            e.printStackTrace();
+            req.setAttribute("msg", "文件上传失败: " + e.getMessage());
+            req.getRequestDispatcher("addStu.jsp").forward(req, resp);
+            return;
+        }
+
+        System.out.println("[StudentServlet] 解析完成 - 姓名: " + stuName + ", 年龄: " + stuAge + ", 头像: " + stuImg);
+
+        // 验证必填字段
+        if (stuName == null || stuName.trim().isEmpty()) {
+            System.out.println("[StudentServlet] 验证失败：学生姓名为空");
+            req.setAttribute("msg", "学生姓名不能为空！");
+            req.getRequestDispatcher("addStu.jsp").forward(req, resp);
+            return;
+        }
+        
+        if (stuImg == null || stuImg.trim().isEmpty()) {
+            System.out.println("[StudentServlet] 验证失败：学生头像为空");
+            req.setAttribute("msg", "请选择学生头像！");
+            req.getRequestDispatcher("addStu.jsp").forward(req, resp);
+            return;
         }
 
         // 封装 POJO
         Student stu = new Student();
         stu.setStuName(stuName);
         stu.setStuAge(stuAge);
+        stu.setStuImg(stuImg);
 
         // 调: 调用业务层方法
+        System.out.println("[StudentServlet] 准备保存学生信息到数据库");
         int num = studentService.addStu(stu);
+        System.out.println("[StudentServlet] 保存结果: " + num);
 
         if (num > 0) { // 录入成功
-            // 获取查询条件（从参数中获取）
+            System.out.println("[StudentServlet] 学生录入成功");
+            // 构建查询条件参数
             StringBuilder searchParams = new StringBuilder();
-            String searchStuNo = req.getParameter("searchStuNo");
-            String searchStuName = req.getParameter("searchStuName");
-            String searchStartAge = req.getParameter("startAge");
-            String searchEndAge = req.getParameter("endAge");
             
             if (searchStuNo != null && !searchStuNo.trim().isEmpty()) {
                 searchParams.append("&stuNo=").append(searchStuNo);
@@ -199,8 +360,9 @@ public class StudentServlet extends HttpServlet {
                 }
             }
         } else { // 录入失败（可能业务校验失败）
+            System.out.println("[StudentServlet] 学生录入失败（数据库返回0）");
             // 存: 存储功能结果
-            req.setAttribute("msg", "录入失败，请检查数据是否符合要求！");
+            req.setAttribute("msg", "录入失败，请检查数据是否符合要求！（年龄必须在15-60岁之间）");
             // 转: 请求转发回录入页面
             req.getRequestDispatcher("addStu.jsp").forward(req, resp);
         }

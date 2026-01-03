@@ -20,7 +20,7 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
 
     @Override
     public int addStu(Student stu) {
-        String sql = "INSERT INTO student (stuName, stuAge) VALUES (?, ?)";
+        String sql = "INSERT INTO student (stuName, stuAge, stuImg) VALUES (?, ?, ?)";
         Connection conn = DBUtil.getConnection();
         PreparedStatement ps = null;
         int result = 0;
@@ -28,6 +28,7 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
             ps = conn.prepareStatement(sql);
             ps.setString(1, stu.getStuName());
             ps.setInt(2, stu.getStuAge());
+            ps.setString(3, stu.getStuImg());
             result = ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -57,7 +58,7 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
 
     @Override
     public Student getStuById(int stuNo) {
-        String sql = "SELECT stuNo, stuName, stuAge FROM student WHERE stuNo = ?";
+        String sql = "SELECT stuNo, stuName, stuAge, stuImg FROM student WHERE stuNo = ?";
         Connection conn = DBUtil.getConnection();
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -71,6 +72,7 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
                 stu.setStuNo(rs.getInt("stuNo"));
                 stu.setStuName(rs.getString("stuName"));
                 stu.setStuAge(rs.getInt("stuAge"));
+                stu.setStuImg(rs.getString("stuImg"));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -82,7 +84,13 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
 
     @Override
     public int updateStu(Student stu) {
-        String sql = "UPDATE student SET stuName = ?, stuAge = ? WHERE stuNo = ?";
+        // 如果stuImg不为空，则更新头像；否则不更新头像字段
+        String sql;
+        if (stu.getStuImg() != null && !stu.getStuImg().trim().isEmpty()) {
+            sql = "UPDATE student SET stuName = ?, stuAge = ?, stuImg = ? WHERE stuNo = ?";
+        } else {
+            sql = "UPDATE student SET stuName = ?, stuAge = ? WHERE stuNo = ?";
+        }
         Connection conn = DBUtil.getConnection();
         PreparedStatement ps = null;
         int result = 0;
@@ -90,7 +98,12 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
             ps = conn.prepareStatement(sql);
             ps.setString(1, stu.getStuName());
             ps.setInt(2, stu.getStuAge());
-            ps.setInt(3, stu.getStuNo());
+            if (stu.getStuImg() != null && !stu.getStuImg().trim().isEmpty()) {
+                ps.setString(3, stu.getStuImg());
+                ps.setInt(4, stu.getStuNo());
+            } else {
+                ps.setInt(3, stu.getStuNo());
+            }
             result = ps.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -102,7 +115,7 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
 
     @Override
     public List<Student> getAllStu() {
-        String sql = "SELECT stuNo, stuName, stuAge FROM student";
+        String sql = "SELECT stuNo, stuName, stuAge, stuImg FROM student";
         Connection conn = DBUtil.getConnection();
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -115,6 +128,7 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
                 stu.setStuNo(rs.getInt("stuNo"));
                 stu.setStuName(rs.getString("stuName"));
                 stu.setStuAge(rs.getInt("stuAge"));
+                stu.setStuImg(rs.getString("stuImg"));
                 list.add(stu);
             }
         } catch (SQLException e) {
@@ -163,6 +177,7 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
                 stu.setStuNo(rs.getInt("stuNo"));
                 stu.setStuName(rs.getString("stuName"));
                 stu.setStuAge(rs.getInt("stuAge"));
+                stu.setStuImg(rs.getString("stuImg"));
                 list.add(stu);
             }
         } catch (SQLException e) {
@@ -224,7 +239,7 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
     
     @Override
     public List<Student> getStuPage(int index, int pageSize, Integer stuNo, String stuName, Integer startAge, Integer endAge) {
-        StringBuilder sql = new StringBuilder("SELECT stuNo, stuName, stuAge FROM student WHERE 1=1");
+        StringBuilder sql = new StringBuilder("SELECT stuNo, stuName, stuAge, stuImg FROM student WHERE 1=1");
         Connection conn = DBUtil.getConnection();
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -268,6 +283,7 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
                 stu.setStuNo(rs.getInt("stuNo"));
                 stu.setStuName(rs.getString("stuName"));
                 stu.setStuAge(rs.getInt("stuAge"));
+                stu.setStuImg(rs.getString("stuImg"));
                 list.add(stu);
             }
         } catch (SQLException e) {
@@ -280,7 +296,7 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
     
     @Override
     public List<Student> getAllStu(Integer stuNo, String stuName, Integer startAge, Integer endAge) {
-        StringBuilder sql = new StringBuilder("SELECT stuNo, stuName, stuAge FROM student WHERE 1=1");
+        StringBuilder sql = new StringBuilder("SELECT stuNo, stuName, stuAge, stuImg FROM student WHERE 1=1");
         Connection conn = DBUtil.getConnection();
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -321,6 +337,7 @@ public class StudentDaoImpl implements StudentDao { // 确保不是 abstract
                 stu.setStuNo(rs.getInt("stuNo"));
                 stu.setStuName(rs.getString("stuName"));
                 stu.setStuAge(rs.getInt("stuAge"));
+                stu.setStuImg(rs.getString("stuImg"));
                 list.add(stu);
             }
         } catch (SQLException e) {

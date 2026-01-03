@@ -4,6 +4,7 @@ public class Student {
     private int stuNo;
     private String stuName;
     private int stuAge;
+    private String stuImg;  // 学生头像路径
 
     public Student() {}
 
@@ -29,5 +30,13 @@ public class Student {
 
     public void setStuAge(int stuAge) {
         this.stuAge = stuAge;
+    }
+
+    public String getStuImg() {
+        return stuImg;
+    }
+
+    public void setStuImg(String stuImg) {
+        this.stuImg = stuImg;
     }
 }

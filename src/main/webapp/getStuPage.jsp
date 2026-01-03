@@ -124,6 +124,7 @@ pageEncoding="UTF-8"%>
               <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gradient-to-r from-blue-500 to-indigo-600">
                   <tr>
+                    <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">头像</th>
                     <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">学号</th>
                     <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">姓名</th>
                     <th class="px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider">年龄</th>
@@ -133,6 +134,23 @@ pageEncoding="UTF-8"%>
                 <tbody class="bg-white divide-y divide-gray-200">
                   <c:forEach var="stu" items="${page.list}">
                     <tr class="hover:bg-gray-50 transition-colors">
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <c:choose>
+                          <c:when test="${not empty stu.stuImg}">
+                            <img
+                              src="${pageContext.request.contextPath}/${stu.stuImg}"
+                              alt="${stu.stuName}"
+                              class="w-12 h-12 rounded-full object-cover border-2 border-gray-300"
+                              onerror="this.src='${pageContext.request.contextPath}/images/default-avatar.png'"
+                            />
+                          </c:when>
+                          <c:otherwise>
+                            <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 text-xs">
+                              无头像
+                            </div>
+                          </c:otherwise>
+                        </c:choose>
+                      </td>
                       <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${stu.stuNo}</td>
                       <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${stu.stuName}</td>
                       <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">${stu.stuAge}</td>
