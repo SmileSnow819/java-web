@@ -33,12 +33,6 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
         </div>
       </div>
     </nav>
-    <div class="bg-blue-50 text-blue-700 px-4 py-2 text-right text-sm">
-      当前在线人数：<span id="onlineCountTop"
-        ><c:out
-          value="${applicationScope.onlineCount != null ? applicationScope.onlineCount : 0}"
-      /></span>
-    </div>
 
     <div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div class="bg-white rounded-lg shadow-xl p-8">
