@@ -9,7 +9,7 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
     <title>用户登录 - 学生管理系统</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-    <script src="js/tips.js"></script>
+    <script src="${pageContext.request.contextPath}/js/tips.js"></script>
   </head>
   <body
     class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen flex items-center justify-center p-4"

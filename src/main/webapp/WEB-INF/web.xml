@@ -6,6 +6,8 @@
   <display-name>学生管理系统</display-name>
   
   <!-- 字符编码过滤器：必须放在第一位，解决中文乱码问题 -->
+  <!-- 注意：CharacterEncodingFilter 类不存在，已注释。如需使用，请先创建该类 -->
+  <!--
   <filter>
     <filter-name>EncodingFilter</filter-name>
     <filter-class>com.yf.filter.CharacterEncodingFilter</filter-class>
@@ -18,19 +20,20 @@
     <filter-name>EncodingFilter</filter-name>
     <url-pattern>/*</url-pattern>
   </filter-mapping>
+  -->
   
   <!-- 姓名敏感字符过滤器：拦截学生信息录入和编辑操作 -->
+  <!-- 注意：NameFilter 类不存在，已注释。如需使用，请先创建该类 -->
+  <!--
   <filter>
     <filter-name>NameFilter</filter-name>
     <filter-class>com.yf.filter.NameFilter</filter-class>
   </filter>
-  <!-- 过滤器映射：拦截StudentServlet的addStu和updateStu操作 -->
   <filter-mapping>
     <filter-name>NameFilter</filter-name>
     <url-pattern>/StudentServlet</url-pattern>
     <dispatcher>REQUEST</dispatcher>
   </filter-mapping>
-  <!-- 同时也拦截JSP页面请求（如果直接访问JSP） -->
   <filter-mapping>
     <filter-name>NameFilter</filter-name>
     <url-pattern>/addStu.jsp</url-pattern>
@@ -39,6 +42,7 @@
     <filter-name>NameFilter</filter-name>
     <url-pattern>/updateStu.jsp</url-pattern>
   </filter-mapping>
+  -->
 
   <!-- 在线用户统计监听器：监听Session创建销毁和属性变化 -->
   <listener>

@@ -112,40 +112,12 @@ public class UserServlet extends HttpServlet {
             System.out.println("[UserServlet] 用户登录成功: " + u.getU_name());
             System.out.println("[UserServlet] Session ID: " + sessionId);
             
-            // 存: 将用户信息存入 Session（这会触发监听器更新在线人数）
+            // 存: 将用户信息存入 Session（这会触发监听器自动更新在线人数）
             req.getSession().setAttribute("currentUser", u);
-            System.out.println("[UserServlet] 已设置Session属性 currentUser");
-            
             req.getSession().setAttribute("username", u.getU_name());
-            System.out.println("[UserServlet] 已设置Session属性 username = " + u.getU_name());
+            System.out.println("[UserServlet] 已设置Session属性 currentUser 和 username");
             
-            // 验证Session中的属性
-            System.out.println("[UserServlet] 验证Session属性:");
-            System.out.println("[UserServlet] - currentUser: " + req.getSession().getAttribute("currentUser"));
-            System.out.println("[UserServlet] - username: " + req.getSession().getAttribute("username"));
-            
-            // 检查ServletContext中的在线人数
-            Object onlineCount = req.getSession().getServletContext().getAttribute("onlineCount");
-            System.out.println("[UserServlet] 当前ServletContext.onlineCount = " + onlineCount);
-            
-            // 手动触发在线人数更新（作为监听器的备用方案）
-            // 等待一小段时间让监听器执行
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                // 忽略中断异常
-            }
-            
-            // 再次检查在线人数
-            Object updatedCount = req.getSession().getServletContext().getAttribute("onlineCount");
-            System.out.println("[UserServlet] 等待后的ServletContext.onlineCount = " + updatedCount);
-            
-            // 如果监听器没有更新，手动更新
-            if (updatedCount == null || (Integer) updatedCount == 0) {
-                System.out.println("[UserServlet] 监听器可能未触发，手动更新在线人数");
-                req.getSession().getServletContext().setAttribute("onlineCount", 1);
-                System.out.println("[UserServlet] 手动设置onlineCount = 1");
-            }
+            // 监听器会自动更新在线人数，无需手动处理
 
             if (isAjax) {
                 // AJAX请求返回JSON响应
@@ -153,7 +125,9 @@ public class UserServlet extends HttpServlet {
                 resp.getWriter().println("{\"success\": true, \"message\": \"登录成功\"}");
             } else {
                 // 转: 重定向到学生列表页面 (系统的主要功能页面)
-                resp.sendRedirect("StudentServlet?action=getAll");
+                // 使用绝对路径，确保包含 context path
+                String contextPath = req.getContextPath();
+                resp.sendRedirect(contextPath + "/StudentServlet?action=getAll");
             }
         } else { // 登录失败
             if (isAjax) {
