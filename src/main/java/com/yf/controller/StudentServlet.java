@@ -112,6 +112,9 @@ public class StudentServlet extends HttpServlet {
             case "getStuPage":
                 getStuPage(req, resp); // 分页显示学生信息
                 break;
+            case "getDetail":
+                getDetail(req, resp); // 查看学生详情
+                break;
             default:
                 getAllStu(req, resp);
         }
@@ -506,7 +509,47 @@ public class StudentServlet extends HttpServlet {
         }
     }
 
-    // --- 4. 根据ID查询学生（用于跳转到编辑页）---
+    // --- 4. 查看学生详情 ---
+    private void getDetail(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        // 取: 获取学号
+        int stuNo = Integer.parseInt(req.getParameter("stuNo"));
+        
+        // 获取当前页和查询条件（用于返回时保留）
+        String pageNow = req.getParameter("pageNow");
+        String searchStuNo = req.getParameter("searchStuNo");
+        String searchStuName = req.getParameter("searchStuName");
+        String searchStartAge = req.getParameter("startAge");
+        String searchEndAge = req.getParameter("endAge");
+        
+        // 判断是从分页视图还是全查视图跳转的
+        String returnView = "getStuPage"; // 默认返回分页视图
+        if (pageNow == null || pageNow.trim().isEmpty()) {
+            returnView = "getAll"; // 如果没有pageNow参数，说明是从全查视图跳转的
+        }
+
+        // 调: 调用业务层中查询的方法
+        Student stu = studentService.getStuById(stuNo);
+        
+        if (stu == null) {
+            // 学生不存在，返回列表页
+            resp.sendRedirect("StudentServlet?action=getAll");
+            return;
+        }
+
+        // 存: 把查询到的数据和返回信息带到详情页面上
+        req.setAttribute("student", stu);
+        req.setAttribute("pageNow", pageNow);
+        req.setAttribute("searchStuNo", searchStuNo);
+        req.setAttribute("searchStuName", searchStuName);
+        req.setAttribute("searchStartAge", searchStartAge);
+        req.setAttribute("searchEndAge", searchEndAge);
+        req.setAttribute("returnView", returnView);
+
+        // 转: 请求转发到详情页面
+        req.getRequestDispatcher("detailStu.jsp").forward(req, resp);
+    }
+
+    // --- 5. 根据ID查询学生（用于跳转到编辑页）---
     private void getStuById(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         // 取: 获取学号
         int stuNo = Integer.parseInt(req.getParameter("stuNo"));
@@ -540,7 +583,7 @@ public class StudentServlet extends HttpServlet {
         req.getRequestDispatcher("updateStu.jsp").forward(req, resp);
     }
 
-    // --- 5. 编辑学生 ---
+    // --- 6. 编辑学生 ---
     private void updateStu(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         // 取: 获取所有参数
         int stuNo = Integer.parseInt(req.getParameter("stuNo"));

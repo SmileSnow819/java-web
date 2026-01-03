@@ -254,8 +254,14 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
                       </td>
                       <td class="px-6 py-4 whitespace-nowrap text-sm">
                         <button
+                          onclick="goToDetail(${stu.stuNo})"
+                          class="mr-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-xs"
+                        >
+                          详情
+                        </button>
+                        <button
                           onclick="goToUpdate(${stu.stuNo})"
-                          class="mr-3 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-xs"
+                          class="mr-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-xs"
                         >
                           编辑
                         </button>
@@ -277,6 +283,35 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
     </div>
 
     <script>
+      function goToDetail(stuNo) {
+        var url = 'StudentServlet?action=getDetail&stuNo=' + stuNo;
+        var searchStuNo = document.getElementById('searchStuNo')
+          ? document.getElementById('searchStuNo').value
+          : '';
+        var searchStuName = document.getElementById('searchStuName')
+          ? document.getElementById('searchStuName').value
+          : '';
+        var searchStartAge = document.querySelector(
+          'input[name="startAge"]'
+        ).value;
+        var searchEndAge = document.querySelector('input[name="endAge"]').value;
+
+        if (searchStuNo && searchStuNo.trim() !== '') {
+          url += '&searchStuNo=' + encodeURIComponent(searchStuNo);
+        }
+        if (searchStuName && searchStuName.trim() !== '') {
+          url += '&searchStuName=' + encodeURIComponent(searchStuName);
+        }
+        if (searchStartAge && searchStartAge.trim() !== '') {
+          url += '&startAge=' + encodeURIComponent(searchStartAge);
+        }
+        if (searchEndAge && searchEndAge.trim() !== '') {
+          url += '&endAge=' + encodeURIComponent(searchEndAge);
+        }
+
+        window.location.href = url;
+      }
+
       function goToUpdate(stuNo) {
         var url = 'StudentServlet?action=toUpdate&stuNo=' + stuNo;
         var searchStuNo = document.getElementById('searchStuNo')
