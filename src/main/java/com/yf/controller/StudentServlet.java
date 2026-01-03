@@ -592,11 +592,227 @@ public class StudentServlet extends HttpServlet {
     }
 
     // --- 6. 编辑学生 ---
-    private void updateStu(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        // 取: 获取所有参数
-        int stuNo = Integer.parseInt(req.getParameter("stuNo"));
-        String stuName = req.getParameter("stuName");
+    private void updateStu(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
+        // 检查是否为multipart请求（文件上传）
+        if (!ServletFileUpload.isMultipartContent(req)) {
+            System.out.println("[StudentServlet] 错误：编辑学生不是multipart请求");
+            req.setAttribute("msg", "请求格式错误！请确保表单设置了enctype=\"multipart/form-data\"");
+            // 需要重新获取学生信息并转发到编辑页面
+            int stuNo = Integer.parseInt(req.getParameter("stuNo"));
+            Student stu = studentService.getStuById(stuNo);
+            req.setAttribute("student", stu);
+            req.setAttribute("pageNow", req.getParameter("pageNow"));
+            req.setAttribute("searchStuNo", req.getParameter("searchStuNo"));
+            req.setAttribute("searchStuName", req.getParameter("searchStuName"));
+            req.setAttribute("searchStartAge", req.getParameter("startAge"));
+            req.setAttribute("searchEndAge", req.getParameter("endAge"));
+            req.setAttribute("returnView", req.getParameter("returnView"));
+            req.getRequestDispatcher("updateStu.jsp").forward(req, resp);
+            return;
+        }
+
+        // 初始化变量
+        int stuNo = 0;
+        String stuName = null;
+        int stuAge = 0;
+        String stuImg = null;  // 新上传的图片路径
+        String returnView = "getStuPage";
+        String pageNow = "1";
+        String searchStuNo = null;
+        String searchStuName = null;
+        String searchStartAge = null;
+        String searchEndAge = null;
         
+        // 先查询原有学生信息，用于获取原有头像
+        Student existingStu = null;
+
+        List<FileItem> items = null;
+        
+        try {
+            // 检查是否已经解析过（从doPost方法传递过来的）
+            @SuppressWarnings("unchecked")
+            List<FileItem> cachedItems = (List<FileItem>) req.getAttribute("parsedFileItems");
+            
+            if (cachedItems != null) {
+                // 使用已解析的items
+                System.out.println("[StudentServlet] 编辑学生 - 使用已缓存的解析结果");
+                items = cachedItems;
+            } else {
+                // 需要重新解析请求
+                System.out.println("[StudentServlet] 编辑学生 - 开始解析multipart请求");
+                DiskFileItemFactory factory = new DiskFileItemFactory();
+                ServletFileUpload upload = new ServletFileUpload(factory);
+                upload.setHeaderEncoding("UTF-8");  // 设置编码
+                
+                // 解析请求
+                items = upload.parseRequest(req);
+            }
+            
+            // 获取上传文件的保存目录
+            String uploadPath = req.getServletContext().getRealPath("/images");
+            File uploadDir = new File(uploadPath);
+            if (!uploadDir.exists()) {
+                uploadDir.mkdirs();
+            }
+
+            // 遍历所有表单项
+            for (FileItem item : items) {
+                if (item.isFormField()) {
+                    // 普通表单字段
+                    String fieldName = item.getFieldName();
+                    String fieldValue = item.getString("UTF-8");
+                    
+                    switch (fieldName) {
+                        case "stuNo":
+                            try {
+                                stuNo = Integer.parseInt(fieldValue);
+                            } catch (NumberFormatException e) {
+                                req.setAttribute("msg", "学号格式错误！");
+                                req.getRequestDispatcher("updateStu.jsp").forward(req, resp);
+                                return;
+                            }
+                            break;
+                        case "stuName":
+                            stuName = fieldValue;
+                            break;
+                        case "stuAge":
+                            try {
+                                stuAge = Integer.parseInt(fieldValue);
+                            } catch (NumberFormatException e) {
+                                req.setAttribute("msg", "年龄输入格式有误！");
+                                req.getRequestDispatcher("updateStu.jsp").forward(req, resp);
+                                return;
+                            }
+                            break;
+                        case "returnView":
+                            returnView = fieldValue;
+                            break;
+                        case "pageNow":
+                            pageNow = fieldValue;
+                            break;
+                        case "searchStuNo":
+                            searchStuNo = fieldValue;
+                            break;
+                        case "searchStuName":
+                            searchStuName = fieldValue;
+                            break;
+                        case "startAge":
+                            searchStartAge = fieldValue;
+                            break;
+                        case "endAge":
+                            searchEndAge = fieldValue;
+                            break;
+                    }
+                } else {
+                    // 文件字段
+                    if ("stuImg".equals(item.getFieldName()) && item.getSize() > 0) {
+                        String fileName = item.getName();
+                        if (fileName != null && !fileName.trim().isEmpty()) {
+                            // 验证文件类型
+                            String contentType = item.getContentType();
+                            if (contentType == null || !contentType.startsWith("image/")) {
+                                req.setAttribute("msg", "请上传图片文件！");
+                                if (stuNo > 0) {
+                                    existingStu = studentService.getStuById(stuNo);
+                                    req.setAttribute("student", existingStu);
+                                    req.setAttribute("pageNow", pageNow);
+                                    req.setAttribute("searchStuNo", searchStuNo);
+                                    req.setAttribute("searchStuName", searchStuName);
+                                    req.setAttribute("searchStartAge", searchStartAge);
+                                    req.setAttribute("searchEndAge", searchEndAge);
+                                    req.setAttribute("returnView", returnView);
+                                }
+                                req.getRequestDispatcher("updateStu.jsp").forward(req, resp);
+                                return;
+                            }
+                            
+                            // 验证文件大小（限制为5MB）
+                            if (item.getSize() > 5 * 1024 * 1024) {
+                                req.setAttribute("msg", "图片大小不能超过5MB！");
+                                if (stuNo > 0) {
+                                    existingStu = studentService.getStuById(stuNo);
+                                    req.setAttribute("student", existingStu);
+                                    req.setAttribute("pageNow", pageNow);
+                                    req.setAttribute("searchStuNo", searchStuNo);
+                                    req.setAttribute("searchStuName", searchStuName);
+                                    req.setAttribute("searchStartAge", searchStartAge);
+                                    req.setAttribute("searchEndAge", searchEndAge);
+                                    req.setAttribute("returnView", returnView);
+                                }
+                                req.getRequestDispatcher("updateStu.jsp").forward(req, resp);
+                                return;
+                            }
+                            
+                            // 生成唯一文件名（使用UUID避免重名）
+                            String ext = fileName.substring(fileName.lastIndexOf("."));
+                            String newFileName = UUID.randomUUID().toString() + ext;
+                            String filePath = uploadPath + File.separator + newFileName;
+                            
+                            // 保存文件
+                            File storeFile = new File(filePath);
+                            try (InputStream is = item.getInputStream();
+                                 FileOutputStream fos = new FileOutputStream(storeFile)) {
+                                IOUtils.copy(is, fos);
+                            }
+                            
+                            // 保存相对路径到数据库（相对于webapp根目录）
+                            stuImg = "images/" + newFileName;
+                            System.out.println("[StudentServlet] 编辑学生 - 新头像上传成功: " + stuImg);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.out.println("[StudentServlet] 编辑学生 - 解析请求时发生异常: " + e.getMessage());
+            req.setAttribute("msg", "文件上传失败: " + e.getMessage());
+            if (stuNo > 0) {
+                existingStu = studentService.getStuById(stuNo);
+                req.setAttribute("student", existingStu);
+                req.setAttribute("pageNow", pageNow);
+                req.setAttribute("searchStuNo", searchStuNo);
+                req.setAttribute("searchStuName", searchStuName);
+                req.setAttribute("searchStartAge", searchStartAge);
+                req.setAttribute("searchEndAge", searchEndAge);
+                req.setAttribute("returnView", returnView);
+            }
+            req.getRequestDispatcher("updateStu.jsp").forward(req, resp);
+            return;
+        }
+
+        System.out.println("[StudentServlet] 编辑学生 - 解析完成 - 学号: " + stuNo + ", 姓名: " + stuName + ", 年龄: " + stuAge + ", 新头像: " + stuImg);
+
+        // 验证必填字段
+        if (stuNo <= 0) {
+            req.setAttribute("msg", "学号不能为空！");
+            if (stuNo > 0) {
+                existingStu = studentService.getStuById(stuNo);
+                req.setAttribute("student", existingStu);
+                req.setAttribute("pageNow", pageNow);
+                req.setAttribute("searchStuNo", searchStuNo);
+                req.setAttribute("searchStuName", searchStuName);
+                req.setAttribute("searchStartAge", searchStartAge);
+                req.setAttribute("searchEndAge", searchEndAge);
+                req.setAttribute("returnView", returnView);
+            }
+            req.getRequestDispatcher("updateStu.jsp").forward(req, resp);
+            return;
+        }
+        
+        if (stuName == null || stuName.trim().isEmpty()) {
+            req.setAttribute("msg", "姓名不能为空！");
+            existingStu = studentService.getStuById(stuNo);
+            req.setAttribute("student", existingStu);
+            req.setAttribute("pageNow", pageNow);
+            req.setAttribute("searchStuNo", searchStuNo);
+            req.setAttribute("searchStuName", searchStuName);
+            req.setAttribute("searchStartAge", searchStartAge);
+            req.setAttribute("searchEndAge", searchEndAge);
+            req.setAttribute("returnView", returnView);
+            req.getRequestDispatcher("updateStu.jsp").forward(req, resp);
+            return;
+        }
+
         // 检查是否经过过滤器处理
         String originalName = (String) req.getAttribute("originalName");
         if (originalName != null) {
@@ -604,30 +820,48 @@ public class StudentServlet extends HttpServlet {
             System.out.println("[StudentServlet] 编辑学生 - 姓名已被过滤: \"" + originalName + "\" -> \"" + stuName + "\"");
         }
         
-        int stuAge = Integer.parseInt(req.getParameter("stuAge"));
-        
-        // 获取返回视图类型
-        String returnView = req.getParameter("returnView");
-        if (returnView == null || returnView.trim().isEmpty()) {
-            returnView = "getStuPage"; // 默认返回分页视图
-        }
-        
-        // 获取当前页信息
-        String pageNow = req.getParameter("pageNow");
-        if (pageNow == null || pageNow.trim().isEmpty()) {
-            pageNow = (String) req.getSession().getAttribute("currentPageNow");
-            if (pageNow == null) {
-                pageNow = "1";
+        // 如果用户没有上传新头像，则保留原有头像
+        if (stuImg == null || stuImg.trim().isEmpty()) {
+            // 查询原有学生信息，获取原有头像路径
+            if (existingStu == null) {
+                existingStu = studentService.getStuById(stuNo);
+            }
+            if (existingStu != null && existingStu.getStuImg() != null && !existingStu.getStuImg().trim().isEmpty()) {
+                stuImg = existingStu.getStuImg();
+                System.out.println("[StudentServlet] 编辑学生 - 保留原有头像: " + stuImg);
+            } else {
+                // 如果原有也没有头像，使用默认头像
+                stuImg = "images/default-avatar.png";
+                System.out.println("[StudentServlet] 编辑学生 - 使用默认头像");
             }
         }
+
+        // 封装 POJO
+        Student stu = new Student();
+        stu.setStuNo(stuNo);
+        stu.setStuName(stuName);
+        stu.setStuAge(stuAge);
+        stu.setStuImg(stuImg);  // 设置头像路径（新上传的或保留原有的）
+
+        // 调: 调用业务层修改的方法
+        int result = studentService.updateStu(stu);
         
-        // 获取查询条件（从参数中获取）
+        if (result <= 0) {
+            req.setAttribute("msg", "修改失败！");
+            existingStu = studentService.getStuById(stuNo);
+            req.setAttribute("student", existingStu);
+            req.setAttribute("pageNow", pageNow);
+            req.setAttribute("searchStuNo", searchStuNo);
+            req.setAttribute("searchStuName", searchStuName);
+            req.setAttribute("searchStartAge", searchStartAge);
+            req.setAttribute("searchEndAge", searchEndAge);
+            req.setAttribute("returnView", returnView);
+            req.getRequestDispatcher("updateStu.jsp").forward(req, resp);
+            return;
+        }
+
+        // 构建查询参数用于重定向
         StringBuilder searchParams = new StringBuilder();
-        String searchStuNo = req.getParameter("searchStuNo");
-        String searchStuName = req.getParameter("searchStuName");
-        String searchStartAge = req.getParameter("startAge");
-        String searchEndAge = req.getParameter("endAge");
-        
         if (searchStuNo != null && !searchStuNo.trim().isEmpty()) {
             searchParams.append("&stuNo=").append(searchStuNo);
         }
@@ -641,15 +875,6 @@ public class StudentServlet extends HttpServlet {
             searchParams.append("&endAge=").append(searchEndAge);
         }
 
-        // 封装 POJO
-        Student stu = new Student();
-        stu.setStuNo(stuNo);
-        stu.setStuName(stuName);
-        stu.setStuAge(stuAge);
-
-        // 调: 调用业务层修改的方法
-        studentService.updateStu(stu);
-
         // 转: 根据返回视图类型重定向
         if ("getAll".equals(returnView)) {
             // 返回到全查视图，保留查询条件
@@ -660,6 +885,9 @@ public class StudentServlet extends HttpServlet {
             }
         } else {
             // 返回到分页界面，保留当前页和查询条件
+            if (pageNow == null || pageNow.trim().isEmpty()) {
+                pageNow = "1";
+            }
             if (searchParams.length() > 0) {
                 resp.sendRedirect("StudentServlet?action=getStuPage&pageNow=" + pageNow + searchParams.toString());
             } else {

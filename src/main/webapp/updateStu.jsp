@@ -78,7 +78,7 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
           </div>
         </c:if>
 
-        <form action="StudentServlet" method="post" class="space-y-6">
+        <form action="StudentServlet" method="post" enctype="multipart/form-data" class="space-y-6">
           <input type="hidden" name="action" value="updateStu" />
           <input type="hidden" name="pageNow" value="${pageNow}" />
           <input type="hidden" name="searchStuNo" value="${searchStuNo}" />
@@ -86,6 +86,7 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
           <input type="hidden" name="startAge" value="${searchStartAge}" />
           <input type="hidden" name="endAge" value="${searchEndAge}" />
           <input type="hidden" name="returnView" value="${returnView}" />
+          <input type="hidden" id="originalStuImg" value="${not empty student.stuImg ? student.stuImg : 'images/default-avatar.png'}" />
 
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -98,6 +99,65 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
               readonly
               class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-600 cursor-not-allowed"
             />
+          </div>
+
+          <!-- 学生头像上传 -->
+          <div>
+            <label
+              for="stuImg"
+              class="block text-sm font-medium text-gray-700 mb-2"
+            >
+              学生头像 <span class="text-gray-500 text-xs">(可选，不选择则保留原头像)</span>
+            </label>
+            <div class="space-y-4">
+              <!-- 原始头像显示 -->
+              <div id="originalAvatarContainer" class="mt-2">
+                <p class="text-sm font-medium text-gray-700 mb-2">当前头像：</p>
+                <div class="relative inline-block">
+                  <img
+                    id="originalAvatarImg"
+                    src="${pageContext.request.contextPath}/${not empty student.stuImg ? student.stuImg : 'images/default-avatar.png'}"
+                    alt="当前头像"
+                    class="w-32 h-32 object-cover rounded-lg border-2 border-gray-300 shadow-md"
+                    onerror="this.src='${pageContext.request.contextPath}/images/default-avatar.png'"
+                  />
+                </div>
+              </div>
+
+              <!-- 文件上传输入 -->
+              <input
+                type="file"
+                id="stuImg"
+                name="stuImg"
+                accept="image/*"
+                onchange="handleFileChange(event)"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+              />
+              <p class="text-sm text-gray-500">支持格式：JPG、PNG、GIF等图片格式</p>
+              
+              <!-- 新头像预览区域 -->
+              <div id="newAvatarPreviewContainer" class="mt-4" style="display: none;">
+                <p class="text-sm font-medium text-gray-700 mb-2">新头像预览：</p>
+                <div class="relative inline-block">
+                  <img
+                    id="newAvatarPreviewImg"
+                    src=""
+                    alt="新头像预览"
+                    class="w-32 h-32 object-cover rounded-lg border-2 border-blue-400 shadow-md"
+                  />
+                  <button
+                    type="button"
+                    id="cancelNewAvatarBtn"
+                    onclick="cancelNewAvatar()"
+                    class="absolute top-0 right-0 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600 transition-colors"
+                    title="取消更换，恢复原头像"
+                  >
+                    ×
+                  </button>
+                </div>
+                <p class="mt-2 text-sm text-blue-600">💡 点击 × 可取消更换，恢复原头像</p>
+              </div>
+            </div>
           </div>
 
           <div>
@@ -185,6 +245,69 @@ uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
     </div>
 
     <script>
+      // 保存原始头像路径
+      var originalAvatarSrc = '${pageContext.request.contextPath}/${not empty student.stuImg ? student.stuImg : 'images/default-avatar.png'}';
+      
+      // 处理文件选择
+      function handleFileChange(event) {
+        const file = event.target.files[0];
+        const previewContainer = document.getElementById('newAvatarPreviewContainer');
+        const previewImg = document.getElementById('newAvatarPreviewImg');
+        const fileInput = document.getElementById('stuImg');
+        
+        if (file) {
+          // 验证文件类型
+          if (!file.type.startsWith('image/')) {
+            alert('请选择图片文件！');
+            fileInput.value = '';
+            if (previewContainer) previewContainer.style.display = 'none';
+            return;
+          }
+          
+          // 验证文件大小（限制为5MB）
+          if (file.size > 5 * 1024 * 1024) {
+            alert('图片大小不能超过5MB！');
+            fileInput.value = '';
+            if (previewContainer) previewContainer.style.display = 'none';
+            return;
+          }
+          
+          // 创建预览
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            if (previewImg) {
+              previewImg.src = e.target.result;
+              if (previewContainer) previewContainer.style.display = 'block';
+            }
+          };
+          reader.readAsDataURL(file);
+        } else {
+          if (previewContainer) previewContainer.style.display = 'none';
+        }
+      }
+      
+      // 取消新头像，恢复原头像
+      function cancelNewAvatar() {
+        const fileInput = document.getElementById('stuImg');
+        const previewContainer = document.getElementById('newAvatarPreviewContainer');
+        const previewImg = document.getElementById('newAvatarPreviewImg');
+        
+        // 清空文件输入
+        if (fileInput) {
+          fileInput.value = '';
+        }
+        
+        // 隐藏预览区域
+        if (previewContainer) {
+          previewContainer.style.display = 'none';
+        }
+        
+        // 清空预览图片
+        if (previewImg) {
+          previewImg.src = '';
+        }
+      }
+
       function goBack() {
         var returnView = '${returnView}';
         var url = 'StudentServlet?action=' + returnView;
