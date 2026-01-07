@@ -71,12 +71,10 @@ public class UserDaoImpl implements UserDao {
         try {
             // 编写sql语句
             String sql = "SELECT * FROM user WHERE u_name=?";
-            System.out.println("执行SQL查询: " + sql + ", 参数: " + u_name);
             
             // 获取数据库连接
             conn = DBUtil.getConnection();
             if (conn == null) {
-                System.err.println("数据库连接失败！");
                 return null;
             }
             
@@ -93,12 +91,8 @@ public class UserDaoImpl implements UserDao {
                 user.setU_id(rs.getInt("u_id"));
                 user.setU_name(rs.getString("u_name"));
                 user.setU_pwd(rs.getString("u_pwd"));
-                System.out.println("找到用户: " + user.getU_name());
-            } else {
-                System.out.println("未找到用户: " + u_name);
             }
         } catch (SQLException e) {
-            System.err.println("getUserByName SQL异常: " + e.getMessage());
             e.printStackTrace();
             // 不抛出RuntimeException，而是返回null
             return null;

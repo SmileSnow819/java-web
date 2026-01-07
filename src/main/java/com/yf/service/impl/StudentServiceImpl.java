@@ -16,7 +16,6 @@ public class StudentServiceImpl implements StudentService {
     public int addStu(Student stu) {
         // [业务逻辑]：检查学生年龄是否合理 (例如，必须在 15 到 60 岁之间)
         if (stu.getStuAge() < 15 || stu.getStuAge() > 60) {
-            System.out.println("业务校验失败：学生年龄不符合入学要求！");
             return 0;
         }
         return studentDao.addStu(stu);
@@ -41,7 +40,6 @@ public class StudentServiceImpl implements StudentService {
     public int updateStu(Student stu) {
         // [业务逻辑]：检查更新后的数据有效性
         if (stu.getStuName() == null || stu.getStuName().trim().isEmpty()) {
-            System.out.println("业务校验失败：学生姓名不能为空。");
             return 0;
         }
         return studentDao.updateStu(stu);

@@ -53,8 +53,6 @@ public class UserServlet extends HttpServlet {
         u.setU_pwd(pwd);
 
         int num = userService.register(u);
-        // --- 诊断日志：查看 num 的真实值 ---
-        System.out.println("用户 " + user + " 注册操作返回结果 num = " + num);
         
         // 检查是否为AJAX请求
         String contentType = req.getHeader("Content-Type");
@@ -86,9 +84,6 @@ public class UserServlet extends HttpServlet {
 
     // --- 退出登录功能 ---
     private void logout(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        String username = (String) req.getSession().getAttribute("username");
-        System.out.println("[UserServlet] 用户登出: " + username);
-        
         // 清除session中的用户信息（这会触发监听器更新在线人数）
         req.getSession().removeAttribute("currentUser");
         req.getSession().removeAttribute("username");
@@ -111,15 +106,9 @@ public class UserServlet extends HttpServlet {
         boolean isAjax = contentType != null && contentType.contains("multipart/form-data");
 
         if (u != null) { // 登录成功
-            // 获取Session信息用于调试
-            String sessionId = req.getSession().getId();
-            System.out.println("[UserServlet] 用户登录成功: " + u.getU_name());
-            System.out.println("[UserServlet] Session ID: " + sessionId);
-            
             // 存: 将用户信息存入 Session（这会触发监听器自动更新在线人数）
             req.getSession().setAttribute("currentUser", u);
             req.getSession().setAttribute("username", u.getU_name());
-            System.out.println("[UserServlet] 已设置Session属性 currentUser 和 username");
             
             // 处理记住密码功能
             if ("true".equals(remember) && user != null && pwd != null) {
@@ -139,10 +128,8 @@ public class UserServlet extends HttpServlet {
                     passwordCookie.setMaxAge(7 * 24 * 60 * 60); // 7天
                     passwordCookie.setPath(req.getContextPath());
                     resp.addCookie(passwordCookie);
-                    
-                    System.out.println("[UserServlet] 已保存记住密码Cookie");
                 } catch (Exception e) {
-                    System.out.println("[UserServlet] 保存Cookie失败: " + e.getMessage());
+                    // Cookie保存失败，静默处理
                 }
             } else {
                 // 用户没有选择记住密码，清除之前的Cookie
@@ -156,7 +143,6 @@ public class UserServlet extends HttpServlet {
                         }
                     }
                 }
-                System.out.println("[UserServlet] 已清除记住密码Cookie");
             }
             
             // 监听器会自动更新在线人数，无需手动处理
@@ -193,12 +179,7 @@ public class UserServlet extends HttpServlet {
         // 取: 获取请求当中的数据
         String u_name = req.getParameter("u_name");
         
-        // 添加调试日志
-        System.out.println("--- checkUsername 调试信息 ---");
-        System.out.println("接收到的用户名参数: " + u_name);
-        
         if (u_name == null || u_name.trim().isEmpty()) {
-            System.out.println("用户名为空，返回false");
             resp.getWriter().println(false);
             return;
         }
@@ -209,15 +190,12 @@ public class UserServlet extends HttpServlet {
             
             if (user != null) {
                 // 该用户已经注册
-                System.out.println("用户 " + u_name + " 已存在，返回false (不可注册)");
                 resp.getWriter().println(false);
             } else {
                 // 该用户可以注册
-                System.out.println("用户 " + u_name + " 不存在，返回true (可以注册)");
                 resp.getWriter().println(true);
             }
         } catch (Exception e) {
-            System.err.println("checkUsername 发生异常: " + e.getMessage());
             e.printStackTrace();
             // 发生异常时返回false，阻止注册
             resp.getWriter().println(false);

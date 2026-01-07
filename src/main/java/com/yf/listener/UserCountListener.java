@@ -30,7 +30,6 @@ public class UserCountListener implements ServletContextListener, HttpSessionLis
         Set<String> sessionIds = new HashSet<>();
         application.setAttribute(ONLINE_SESSION_IDS, sessionIds);
         application.setAttribute("onlineCount", 0);
-        System.out.println("[UserCountListener] 应用启动，初始化在线人数为0");
     }
 
     /**
@@ -38,7 +37,6 @@ public class UserCountListener implements ServletContextListener, HttpSessionLis
      */
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
-        System.out.println("[UserCountListener] 应用关闭");
     }
 
     /**
@@ -47,7 +45,6 @@ public class UserCountListener implements ServletContextListener, HttpSessionLis
      */
     @Override
     public void sessionCreated(HttpSessionEvent se) {
-        System.out.println("[UserCountListener] Session创建: " + se.getSession().getId());
     }
 
     /**
@@ -66,7 +63,6 @@ public class UserCountListener implements ServletContextListener, HttpSessionLis
             // 如果成功移除了Session ID，说明该Session是已登录的，需要更新在线人数
             int count = sessionIds.size();
             application.setAttribute("onlineCount", count);
-            System.out.println("[UserCountListener] Session销毁: " + sessionId + "，当前在线人数: " + count);
         }
     }
 
@@ -94,7 +90,6 @@ public class UserCountListener implements ServletContextListener, HttpSessionLis
                 // 只有成功添加时才更新计数（避免重复添加）
                 int count = sessionIds.size();
                 application.setAttribute("onlineCount", count);
-                System.out.println("[UserCountListener] 用户登录，Session ID: " + sessionId + "，当前在线人数: " + count);
             }
         }
     }
@@ -117,7 +112,6 @@ public class UserCountListener implements ServletContextListener, HttpSessionLis
                 // 如果成功移除了Session ID，更新在线人数
                 int count = sessionIds.size();
                 application.setAttribute("onlineCount", count);
-                System.out.println("[UserCountListener] 用户退出登录，Session ID: " + sessionId + "，当前在线人数: " + count);
             }
         }
     }
@@ -130,9 +124,6 @@ public class UserCountListener implements ServletContextListener, HttpSessionLis
     @Override
     public void attributeReplaced(HttpSessionBindingEvent se) {
         if ("currentUser".equals(se.getName())) {
-            HttpSession session = se.getSession();
-            String sessionId = session.getId();
-            System.out.println("[UserCountListener] Session中currentUser被替换，Session ID: " + sessionId + "，在线人数不变");
             // 不需要更新在线人数，因为Session ID没有变化，只是在同一个Session中切换了用户
         }
     }

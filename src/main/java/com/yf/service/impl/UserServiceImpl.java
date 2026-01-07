@@ -13,7 +13,6 @@ public class UserServiceImpl implements UserService {
     public int register(User user) {
         // [业务逻辑]：可以添加密码复杂度校验、用户名是否已存在校验等
         if (user.getU_pwd().length() < 6) {
-            System.out.println("业务校验失败：密码长度必须大于6位。");
             return 0;
         }
         return userDao.addUser(user);

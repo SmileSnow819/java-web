@@ -28,11 +28,6 @@ public class LoginFilter implements Filter {
         HttpSession session = req.getSession();
         User currentUser = (User) session.getAttribute("currentUser");
         
-        // 调试信息
-        System.out.println("[LoginFilter] 请求路径: " + path);
-        System.out.println("[LoginFilter] Session ID: " + (session != null ? session.getId() : "null"));
-        System.out.println("[LoginFilter] currentUser: " + (currentUser != null ? currentUser.getU_name() : "null"));
-        
         // 不需要登录验证的路径
         boolean isLoginPage = path.equals("/login.jsp") || (path.equals("/UserServlet") &&
                               "login".equals(req.getParameter("action")));
@@ -46,11 +41,9 @@ public class LoginFilter implements Filter {
         
         // 如果访问的是登录页面、注册页面或静态资源，或者用户已登录，则放行
         if (isLoginPage || isRegisterPage || isStaticResource || currentUser != null) {
-            System.out.println("[LoginFilter] 放行请求");
             chain.doFilter(request, response);
         } else {
             // 未登录且访问需要登录的页面，重定向到登录页面
-            System.out.println("[LoginFilter] 拦截请求，重定向到登录页");
             resp.sendRedirect(contextPath + "/login.jsp");
         }
     }

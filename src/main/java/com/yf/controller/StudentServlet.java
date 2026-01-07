@@ -30,6 +30,9 @@ public class StudentServlet extends HttpServlet {
 
     // 依赖 Service 层
     private StudentService studentService = new StudentServiceImpl();
+    
+    // 敏感词列表
+    private static final String[] SENSITIVE_WORDS = {"admin", "user"};
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -83,7 +86,6 @@ public class StudentServlet extends HttpServlet {
                     req.setAttribute("parsedFileItems", items);
                     
                 } catch (Exception e) {
-                    System.out.println("[StudentServlet] 解析multipart请求失败: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -95,8 +97,6 @@ public class StudentServlet extends HttpServlet {
         if (action == null) {
             action = "getAll"; // 默认行为
         }
-        
-        System.out.println("[StudentServlet] doPost - action: " + action + ", isMultipart: " + ServletFileUpload.isMultipartContent(req));
 
         switch (action) {
             case "getAll":
@@ -182,11 +182,8 @@ public class StudentServlet extends HttpServlet {
 
     // --- 2. 录入学生 ---
     private void addStu(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
-        System.out.println("[StudentServlet] 开始处理学生录入请求");
-        
         // 检查是否为multipart请求（文件上传）
         if (!ServletFileUpload.isMultipartContent(req)) {
-            System.out.println("[StudentServlet] 错误：不是multipart请求");
             req.setAttribute("msg", "请求格式错误！请确保表单设置了enctype=\"multipart/form-data\"");
             req.getRequestDispatcher("addStu.jsp").forward(req, resp);
             return;
@@ -211,11 +208,9 @@ public class StudentServlet extends HttpServlet {
             
             if (cachedItems != null) {
                 // 使用已解析的items
-                System.out.println("[StudentServlet] 使用已缓存的解析结果");
                 items = cachedItems;
             } else {
                 // 需要重新解析请求
-                System.out.println("[StudentServlet] 开始解析multipart请求");
                 DiskFileItemFactory factory = new DiskFileItemFactory();
                 ServletFileUpload upload = new ServletFileUpload(factory);
                 upload.setHeaderEncoding("UTF-8");  // 设置编码
@@ -240,7 +235,15 @@ public class StudentServlet extends HttpServlet {
                     
                     switch (fieldName) {
                         case "stuName":
-                            stuName = fieldValue;
+                            // 保存原始名称用于显示过滤提示
+                            String originalName = fieldValue;
+                            // 过滤敏感词
+                            stuName = filterSensitiveWords(fieldValue);
+                            // 如果被过滤了，保存原始和过滤后的名称到 request
+                            if (!originalName.equals(stuName)) {
+                                req.setAttribute("originalName", originalName);
+                                req.setAttribute("safeName", stuName);
+                            }
                             break;
                         case "stuAge":
                             try {
@@ -286,32 +289,25 @@ public class StudentServlet extends HttpServlet {
                             
                             // 保存相对路径到数据库（相对于webapp根目录）
                             stuImg = "images/" + newFileName;
-                            System.out.println("[StudentServlet] 图片上传成功: " + stuImg);
                         }
                     }
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("[StudentServlet] 解析请求时发生异常: " + e.getMessage());
-            e.printStackTrace();
             req.setAttribute("msg", "文件上传失败: " + e.getMessage());
             req.getRequestDispatcher("addStu.jsp").forward(req, resp);
             return;
         }
 
-        System.out.println("[StudentServlet] 解析完成 - 姓名: " + stuName + ", 年龄: " + stuAge + ", 头像: " + stuImg);
-
         // 验证必填字段
         if (stuName == null || stuName.trim().isEmpty()) {
-            System.out.println("[StudentServlet] 验证失败：学生姓名为空");
             req.setAttribute("msg", "学生姓名不能为空！");
             req.getRequestDispatcher("addStu.jsp").forward(req, resp);
             return;
         }
         
         if (stuImg == null || stuImg.trim().isEmpty()) {
-            System.out.println("[StudentServlet] 验证失败：学生头像为空");
             req.setAttribute("msg", "请选择学生头像！");
             req.getRequestDispatcher("addStu.jsp").forward(req, resp);
             return;
@@ -324,12 +320,9 @@ public class StudentServlet extends HttpServlet {
         stu.setStuImg(stuImg);
 
         // 调: 调用业务层方法
-        System.out.println("[StudentServlet] 准备保存学生信息到数据库");
         int num = studentService.addStu(stu);
-        System.out.println("[StudentServlet] 保存结果: " + num);
 
         if (num > 0) { // 录入成功
-            System.out.println("[StudentServlet] 学生录入成功");
             // 构建查询条件参数
             StringBuilder searchParams = new StringBuilder();
             
@@ -371,7 +364,6 @@ public class StudentServlet extends HttpServlet {
                 }
             }
         } else { // 录入失败（可能业务校验失败）
-            System.out.println("[StudentServlet] 学生录入失败（数据库返回0）");
             // 存: 存储功能结果
             req.setAttribute("msg", "录入失败，请检查数据是否符合要求！（年龄必须在15-60岁之间）");
             // 转: 请求转发回录入页面
@@ -595,7 +587,6 @@ public class StudentServlet extends HttpServlet {
     private void updateStu(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
         // 检查是否为multipart请求（文件上传）
         if (!ServletFileUpload.isMultipartContent(req)) {
-            System.out.println("[StudentServlet] 错误：编辑学生不是multipart请求");
             req.setAttribute("msg", "请求格式错误！请确保表单设置了enctype=\"multipart/form-data\"");
             // 需要重新获取学生信息并转发到编辑页面
             int stuNo = Integer.parseInt(req.getParameter("stuNo"));
@@ -635,11 +626,9 @@ public class StudentServlet extends HttpServlet {
             
             if (cachedItems != null) {
                 // 使用已解析的items
-                System.out.println("[StudentServlet] 编辑学生 - 使用已缓存的解析结果");
                 items = cachedItems;
             } else {
                 // 需要重新解析请求
-                System.out.println("[StudentServlet] 编辑学生 - 开始解析multipart请求");
                 DiskFileItemFactory factory = new DiskFileItemFactory();
                 ServletFileUpload upload = new ServletFileUpload(factory);
                 upload.setHeaderEncoding("UTF-8");  // 设置编码
@@ -673,7 +662,15 @@ public class StudentServlet extends HttpServlet {
                             }
                             break;
                         case "stuName":
-                            stuName = fieldValue;
+                            // 保存原始名称用于显示过滤提示
+                            String originalName = fieldValue;
+                            // 过滤敏感词
+                            stuName = filterSensitiveWords(fieldValue);
+                            // 如果被过滤了，保存原始和过滤后的名称到 request
+                            if (!originalName.equals(stuName)) {
+                                req.setAttribute("originalName", originalName);
+                                req.setAttribute("safeName", stuName);
+                            }
                             break;
                         case "stuAge":
                             try {
@@ -757,14 +754,12 @@ public class StudentServlet extends HttpServlet {
                             
                             // 保存相对路径到数据库（相对于webapp根目录）
                             stuImg = "images/" + newFileName;
-                            System.out.println("[StudentServlet] 编辑学生 - 新头像上传成功: " + stuImg);
                         }
                     }
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("[StudentServlet] 编辑学生 - 解析请求时发生异常: " + e.getMessage());
             req.setAttribute("msg", "文件上传失败: " + e.getMessage());
             if (stuNo > 0) {
                 existingStu = studentService.getStuById(stuNo);
@@ -779,8 +774,6 @@ public class StudentServlet extends HttpServlet {
             req.getRequestDispatcher("updateStu.jsp").forward(req, resp);
             return;
         }
-
-        System.out.println("[StudentServlet] 编辑学生 - 解析完成 - 学号: " + stuNo + ", 姓名: " + stuName + ", 年龄: " + stuAge + ", 新头像: " + stuImg);
 
         // 验证必填字段
         if (stuNo <= 0) {
@@ -813,13 +806,6 @@ public class StudentServlet extends HttpServlet {
             return;
         }
 
-        // 检查是否经过过滤器处理
-        String originalName = (String) req.getAttribute("originalName");
-        if (originalName != null) {
-            // 记录过滤信息
-            System.out.println("[StudentServlet] 编辑学生 - 姓名已被过滤: \"" + originalName + "\" -> \"" + stuName + "\"");
-        }
-        
         // 如果用户没有上传新头像，则保留原有头像
         if (stuImg == null || stuImg.trim().isEmpty()) {
             // 查询原有学生信息，获取原有头像路径
@@ -828,11 +814,9 @@ public class StudentServlet extends HttpServlet {
             }
             if (existingStu != null && existingStu.getStuImg() != null && !existingStu.getStuImg().trim().isEmpty()) {
                 stuImg = existingStu.getStuImg();
-                System.out.println("[StudentServlet] 编辑学生 - 保留原有头像: " + stuImg);
             } else {
                 // 如果原有也没有头像，使用默认头像
                 stuImg = "images/default-avatar.png";
-                System.out.println("[StudentServlet] 编辑学生 - 使用默认头像");
             }
         }
 
@@ -983,8 +967,6 @@ public class StudentServlet extends HttpServlet {
     
     // --- 7. 导出Excel ---
     private void exportExcel(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        System.out.println("[StudentServlet] 开始导出Excel");
-        
         // 获取查询条件
         Integer stuNo = null;
         String stuNoStr = req.getParameter("stuNo");
@@ -1105,7 +1087,31 @@ public class StudentServlet extends HttpServlet {
         workbook.close();
         out.flush();
         out.close();
-        
-        System.out.println("[StudentServlet] Excel导出成功，共导出 " + studentList.size() + " 条记录");
+    }
+    
+    /**
+     * 过滤敏感词，将敏感词替换为相应数量的星号
+     * @param text 原始文本
+     * @return 过滤后的文本
+     */
+    private String filterSensitiveWords(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return text;
+        }
+
+        String result = text;
+        // 遍历所有敏感词
+        for (String word : SENSITIVE_WORDS) {
+            // 不区分大小写匹配
+            String regex = "(?i)" + word;
+            // 替换为相应数量的星号
+            StringBuilder stars = new StringBuilder();
+            for (int i = 0; i < word.length(); i++) {
+                stars.append("*");
+            }
+            String replacement = stars.toString();
+            result = result.replaceAll(regex, replacement);
+        }
+        return result;
     }
 }
